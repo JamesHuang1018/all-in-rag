@@ -1,130 +1,130 @@
-# 第二节 数据准备模块实现
+# 第二節 資料準備模組實現
 
-RAG系统的效果很大程度上取决于数据准备的质量。在上一节中，我们明确了"小块检索，大块生成"的父子文本块策略。接下来学习如何将数据准备部分的架构思想转化为可运行的代码。
+RAG系統的效果很大程度上取決於資料準備的質量。在上一節中，我們明確了"小塊檢索，大塊生成"的父子文字塊策略。接下來學習如何將資料準備部分的架構思想轉化為可執行的程式碼。
 
 ```mermaid
 flowchart LR
-    %% 数据准备模块流程
-    START[📁 加载Markdown文件] --> ENHANCE[🔧 元数据增强]
-    ENHANCE --> SPLIT[✂️ 按标题分块]
-    SPLIT --> RELATION[🏷️ 父子关系建立]
-    RELATION --> DEDUP[🧠 智能去重机制]
-    DEDUP --> OUTPUT[📦 输出文本块chunks]
+    %% 資料準備模組流程
+    START[📁 載入Markdown檔案] --> ENHANCE[🔧 後設資料增強]
+    ENHANCE --> SPLIT[✂️ 按標題分塊]
+    SPLIT --> RELATION[🏷️ 父子關係建立]
+    RELATION --> DEDUP[🧠 智慧去重機制]
+    DEDUP --> OUTPUT[📦 輸出文字塊chunks]
     
-    %% 子流程详细说明
-    subgraph LoadProcess [文档加载过程]
-        L1[📂 递归查找md文件]
-        L2[📄 读取文件内容]
-        L3[🆔 分配父文档ID]
+    %% 子流程詳細說明
+    subgraph LoadProcess [文件載入過程]
+        L1[📂 遞迴查詢md檔案]
+        L2[📄 讀取檔案內容]
+        L3[🆔 分配父文件ID]
         L1 --> L2 --> L3
     end
     
-    subgraph EnhanceProcess [元数据增强过程]
-        E1[🏷️ 提取菜品分类]
-        E2[📝 提取菜品名称]
-        E3[⭐ 分析难度等级]
+    subgraph EnhanceProcess [後設資料增強過程]
+        E1[🏷️ 提取菜品分類]
+        E2[📝 提取菜品名稱]
+        E3[⭐ 分析難度等級]
         E1 --> E2 --> E3
     end
     
-    subgraph SplitProcess [结构分块过程]
-        S1[一级标题分割]
-        S2[二级标题分割]
-        S3[三级标题分割]
+    subgraph SplitProcess [結構分塊過程]
+        S1[一級標題分割]
+        S2[二級標題分割]
+        S3[三級標題分割]
         S1 --> S2 --> S3
     end
     
-    %% 连接子流程
+    %% 連線子流程
     START -.-> LoadProcess
     ENHANCE -.-> EnhanceProcess
     SPLIT -.-> SplitProcess
     
-    %% 样式定义
+    %% 樣式定義
     classDef process fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
     classDef subprocess fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     classDef output fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
     
-    %% 应用样式
+    %% 應用樣式
     class START,ENHANCE,SPLIT,RELATION,DEDUP process
     class LoadProcess,EnhanceProcess,SplitProcess subprocess
     class OUTPUT output
 ```
 
-## 一、核心设计
+## 一、核心設計
 
-数据准备模块的核心是实现"小块检索，大块生成"的父子文本块架构。
+資料準備模組的核心是實現"小塊檢索，大塊生成"的父子文字塊架構。
 
-**父子文本块映射关系**：
+**父子文字塊對映關係**：
 ```
-父文档（完整菜谱）
-├── 子块1：菜品介绍 + 难度评级
-├── 子块2：必备原料和工具
-├── 子块3：计算（用量配比）
-├── 子块4：操作（制作步骤）
-└── 子块5：附加内容（变化做法）
+父文件（完整菜譜）
+├── 子塊1：菜品介紹 + 難度評級
+├── 子塊2：必備原料和工具
+├── 子塊3：計算（用量配比）
+├── 子塊4：操作（製作步驟）
+└── 子塊5：附加內容（變化做法）
 ```
 
 **基本流程**：
-- **检索阶段**：使用小的子块进行精确匹配，提高检索准确性
-- **生成阶段**：传递完整的父文档给LLM，确保上下文完整性
-- **智能去重**：当检索到同一道菜的多个子块时，合并为一个完整菜谱
+- **檢索階段**：使用小的子塊進行精確匹配，提高檢索準確性
+- **生成階段**：傳遞完整的父文件給LLM，確保上下文完整性
+- **智慧去重**：當檢索到同一道菜的多個子塊時，合併為一個完整菜譜
 
-**元数据增强**：
-- **菜品分类**：从文件路径推断（荤菜、素菜、汤品等）
-- **难度等级**：从内容中的星级标记提取
-- **菜品名称**：从文件名提取
-- **文档关系**：建立父子文档的ID映射关系
+**後設資料增強**：
+- **菜品分類**：從檔案路徑推斷（葷菜、素菜、湯品等）
+- **難度等級**：從內容中的星級標記提取
+- **菜品名稱**：從檔名提取
+- **文件關係**：建立父子文件的ID對映關係
 
-## 二、模块实现详解
+## 二、模組實現詳解
 
-> [data_preparation.py完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C8/rag_modules/data_preparation.py)
+> [data_preparation.py完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C8/rag_modules/data_preparation.py)
 
-### 2.1 类结构设计
+### 2.1 類結構設計
 
 ```python
 class DataPreparationModule:
-    """数据准备模块 - 负责数据加载、清洗和预处理"""
+    """資料準備模組 - 負責資料載入、清洗和預處理"""
 
     def __init__(self, data_path: str):
         self.data_path = data_path
-        self.documents: List[Document] = []  # 父文档（完整食谱）
-        self.chunks: List[Document] = []     # 子文档（按标题分割的小块）
-        self.parent_child_map: Dict[str, str] = {}  # 子块ID -> 父文档ID的映射
+        self.documents: List[Document] = []  # 父文件（完整食譜）
+        self.chunks: List[Document] = []     # 子文件（按標題分割的小塊）
+        self.parent_child_map: Dict[str, str] = {}  # 子塊ID -> 父文件ID的對映
 ```
 
-- `documents`: 存储完整的菜谱文档（父文档）
-- `chunks`: 存储按标题分割的小块（子文档）
-- `parent_child_map`: 维护父子关系映射
+- `documents`: 儲存完整的菜譜文件（父文件）
+- `chunks`: 儲存按標題分割的小塊（子文件）
+- `parent_child_map`: 維護父子關係對映
 
-### 2.2 文档加载实现
+### 2.2 文件載入實現
 
-#### 2.2.1 批量加载Markdown文件
+#### 2.2.1 批次載入Markdown檔案
 
 ```python
 def load_documents(self) -> List[Document]:
-    """加载文档数据"""
+    """載入文件資料"""
     documents = []
     data_path_obj = Path(self.data_path)
 
     for md_file in data_path_obj.rglob("*.md"):
-        # 读取文件内容，保持Markdown格式
+        # 讀取檔案內容，保持Markdown格式
         with open(md_file, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # 为每个父文档分配唯一ID
+        # 為每個父文件分配唯一ID
         parent_id = str(uuid.uuid4())
 
-        # 创建Document对象
+        # 建立Document物件
         doc = Document(
             page_content=content,
             metadata={
                 "source": str(md_file),
                 "parent_id": parent_id,
-                "doc_type": "parent"  # 标记为父文档
+                "doc_type": "parent"  # 標記為父文件
             }
         )
         documents.append(doc)
 
-    # 增强文档元数据
+    # 增強文件後設資料
     for doc in documents:
         self._enhance_metadata(doc)
 
@@ -132,114 +132,114 @@ def load_documents(self) -> List[Document]:
     return documents
 ```
 
-- `rglob("*.md")`: 递归查找所有Markdown文件
-- `parent_id`: 为每个父文档分配唯一ID，建立父子关系的关键
-- `doc_type`: 标记为"parent"，便于区分父子文档
+- `rglob("*.md")`: 遞迴查詢所有Markdown檔案
+- `parent_id`: 為每個父文件分配唯一ID，建立父子關係的關鍵
+- `doc_type`: 標記為"parent"，便於區分父子文件
 
-#### 2.2.2 元数据增强
+#### 2.2.2 後設資料增強
 
 ```python
 def _enhance_metadata(self, doc: Document):
-    """增强文档元数据"""
+    """增強文件後設資料"""
     file_path = Path(doc.metadata.get('source', ''))
     path_parts = file_path.parts
 
-    # 提取菜品分类
+    # 提取菜品分類
     category_mapping = {
-        'meat_dish': '荤菜', 'vegetable_dish': '素菜', 'soup': '汤品',
+        'meat_dish': '葷菜', 'vegetable_dish': '素菜', 'soup': '湯品',
         'dessert': '甜品', 'breakfast': '早餐', 'staple': '主食',
-        'aquatic': '水产', 'condiment': '调料', 'drink': '饮品'
+        'aquatic': '水產', 'condiment': '調料', 'drink': '飲品'
     }
 
-    # 从文件路径推断分类
+    # 從檔案路徑推斷分類
     doc.metadata['category'] = '其他'
     for key, value in category_mapping.items():
         if key in file_path.parts:
             doc.metadata['category'] = value
             break
 
-    # 提取菜品名称
+    # 提取菜品名稱
     doc.metadata['dish_name'] = file_path.stem
 
-    # 分析难度等级
+    # 分析難度等級
     content = doc.page_content
     if '★★★★★' in content:
-        doc.metadata['difficulty'] = '非常困难'
+        doc.metadata['difficulty'] = '非常困難'
     elif '★★★★' in content:
-        doc.metadata['difficulty'] = '困难'
-    # ... (其他难度等级判断)
+        doc.metadata['difficulty'] = '困難'
+    # ... (其他難度等級判斷)
 
 ```
 
-- **分类推断**: 从HowToCook项目的目录结构推断菜品分类
-- **难度提取**: 从内容中的星级标记自动提取难度等级
-- **名称提取**: 直接使用文件名作为菜品名称
+- **分類推斷**: 從HowToCook專案的目錄結構推斷菜品分類
+- **難度提取**: 從內容中的星級標記自動提取難度等級
+- **名稱提取**: 直接使用檔名作為菜品名稱
 
-### 2.3 Markdown结构分块
+### 2.3 Markdown結構分塊
 
-将完整的菜谱文档按照Markdown标题结构进行分块，实现父子文本块架构。
+將完整的菜譜文件按照Markdown標題結構進行分塊，實現父子文字塊架構。
 
-#### 2.3.1 分块策略
+#### 2.3.1 分塊策略
 
 ```python
 def chunk_documents(self) -> List[Document]:
-    """Markdown结构感知分块"""
+    """Markdown結構感知分塊"""
     if not self.documents:
-        raise ValueError("请先加载文档")
+        raise ValueError("請先載入文件")
 
-    # 使用Markdown标题分割器
+    # 使用Markdown標題分割器
     chunks = self._markdown_header_split()
 
-    # 为每个chunk添加基础元数据
+    # 為每個chunk新增基礎後設資料
     for i, chunk in enumerate(chunks):
         if 'chunk_id' not in chunk.metadata:
-            # 如果没有chunk_id（比如分割失败的情况），则生成一个
+            # 如果沒有chunk_id（比如分割失敗的情況），則生成一個
             chunk.metadata['chunk_id'] = str(uuid.uuid4())
-        chunk.metadata['batch_index'] = i  # 在当前批次中的索引
+        chunk.metadata['batch_index'] = i  # 在當前批次中的索引
         chunk.metadata['chunk_size'] = len(chunk.page_content)
 
     self.chunks = chunks
     return chunks
 ```
 
-#### 2.3.2 Markdown标题分割器
+#### 2.3.2 Markdown標題分割器
 
 ```python
 def _markdown_header_split(self) -> List[Document]:
-    """使用Markdown标题分割器进行结构化分割"""
-    # 定义要分割的标题层级
+    """使用Markdown標題分割器進行結構化分割"""
+    # 定義要分割的標題層級
     headers_to_split_on = [
-        ("#", "主标题"),      # 菜品名称
-        ("##", "二级标题"),   # 必备原料、计算、操作等
-        ("###", "三级标题")   # 简易版本、复杂版本等
+        ("#", "主標題"),      # 菜品名稱
+        ("##", "二級標題"),   # 必備原料、計算、操作等
+        ("###", "三級標題")   # 簡易版本、複雜版本等
     ]
 
-    # 创建Markdown分割器
+    # 建立Markdown分割器
     markdown_splitter = MarkdownHeaderTextSplitter(
         headers_to_split_on=headers_to_split_on,
-        strip_headers=False  # 保留标题，便于理解上下文
+        strip_headers=False  # 保留標題，便於理解上下文
     )
 
     all_chunks = []
     for doc in self.documents:
-        # 对每个文档进行Markdown分割
+        # 對每個文件進行Markdown分割
         md_chunks = markdown_splitter.split_text(doc.page_content)
 
-        # 为每个子块建立与父文档的关系
+        # 為每個子塊建立與父文件的關係
         parent_id = doc.metadata["parent_id"]
 
         for i, chunk in enumerate(md_chunks):
-            # 为子块分配唯一ID并建立父子关系
+            # 為子塊分配唯一ID並建立父子關係
             child_id = str(uuid.uuid4())
             chunk.metadata.update(doc.metadata)
             chunk.metadata.update({
                 "chunk_id": child_id,
                 "parent_id": parent_id,
-                "doc_type": "child",  # 标记为子文档
-                "chunk_index": i      # 在父文档中的位置
+                "doc_type": "child",  # 標記為子文件
+                "chunk_index": i      # 在父文件中的位置
             })
 
-            # 建立父子映射关系
+            # 建立父子對映關係
             self.parent_child_map[child_id] = parent_id
 
         all_chunks.extend(md_chunks)
@@ -247,60 +247,60 @@ def _markdown_header_split(self) -> List[Document]:
     return all_chunks
 ```
 
-- **三级标题分割**: 按照`#`、`##`、`###`进行层级分割
-- **保留标题**: 设置`strip_headers=False`，保留标题信息便于理解上下文
-- **父子关系**: 每个子块都记录其父文档的`parent_id`
-- **唯一标识**: 每个子块都有独立的`child_id`
+- **三級標題分割**: 按照`#`、`##`、`###`進行層級分割
+- **保留標題**: 設定`strip_headers=False`，保留標題資訊便於理解上下文
+- **父子關係**: 每個子塊都記錄其父文件的`parent_id`
+- **唯一標識**: 每個子塊都有獨立的`child_id`
 
-#### 2.3.3 分块效果示例
+#### 2.3.3 分塊效果示例
 
-以"西红柿炒鸡蛋"为例，分块后的效果：
+以"西紅柿炒雞蛋"為例，分塊後的效果：
 
 ```
-原文档：西红柿炒鸡蛋的做法.md (父文档)
-├── 子块1：# 西红柿炒鸡蛋的做法 + 简介 + 难度评级
-├── 子块2：## 必备原料和工具 + 食材清单
-├── 子块3：## 计算 + 用量配比公式
-├── 子块4：## 操作 + 详细制作步骤
-└── 子块5：## 附加内容
+原文件：西紅柿炒雞蛋的做法.md (父文件)
+├── 子塊1：# 西紅柿炒雞蛋的做法 + 簡介 + 難度評級
+├── 子塊2：## 必備原料和工具 + 食材清單
+├── 子塊3：## 計算 + 用量配比公式
+├── 子塊4：## 操作 + 詳細製作步驟
+└── 子塊5：## 附加內容
 ```
 
-**分块逻辑**：
-- **子块1**: 包含一级标题及其下的所有内容（简介、难度评级），直到遇到下一个二级标题
-- **子块2-5**: 每个二级标题及其下的内容形成一个独立子块
-- **精确检索**: 用户问"需要什么食材"时，能精确匹配到子块2
-- **上下文完整**: 生成时传递完整的父文档，包含所有必要信息
+**分塊邏輯**：
+- **子塊1**: 包含一級標題及其下的所有內容（簡介、難度評級），直到遇到下一個二級標題
+- **子塊2-5**: 每個二級標題及其下的內容形成一個獨立子塊
+- **精確檢索**: 使用者問"需要什麼食材"時，能精確匹配到子塊2
+- **上下文完整**: 生成時傳遞完整的父文件，包含所有必要資訊
 
-### 2.4 智能去重
+### 2.4 智慧去重
 
-当用户询问"宫保鸡丁怎么做"时，可能会检索到同一道菜的多个子块。我们需要智能去重，避免重复信息。
+當使用者詢問"宮保雞丁怎麼做"時，可能會檢索到同一道菜的多個子塊。我們需要智慧去重，避免重複資訊。
 
 ```python
 def get_parent_documents(self, child_chunks: List[Document]) -> List[Document]:
-    """根据子块获取对应的父文档（智能去重）"""
-    # 统计每个父文档被匹配的次数（相关性指标）
+    """根據子塊獲取對應的父文件（智慧去重）"""
+    # 統計每個父文件被匹配的次數（相關性指標）
     parent_relevance = {}
     parent_docs_map = {}
 
-    # 收集所有相关的父文档ID和相关性分数
+    # 收集所有相關的父文件ID和相關性分數
     for chunk in child_chunks:
         parent_id = chunk.metadata.get("parent_id")
         if parent_id:
-            # 增加相关性计数
+            # 增加相關性計數
             parent_relevance[parent_id] = parent_relevance.get(parent_id, 0) + 1
 
-            # 缓存父文档（避免重复查找）
+            # 快取父文件（避免重複查詢）
             if parent_id not in parent_docs_map:
                 for doc in self.documents:
                     if doc.metadata.get("parent_id") == parent_id:
                         parent_docs_map[parent_id] = doc
                         break
 
-    # 按相关性排序并构建去重后的父文档列表
+    # 按相關性排序並構建去重後的父文件列表
     sorted_parent_ids = sorted(parent_relevance.keys(),
                              key=lambda x: parent_relevance[x], reverse=True)
 
-    # 构建去重后的父文档列表
+    # 構建去重後的父文件列表
     parent_docs = []
     for parent_id in sorted_parent_ids:
         if parent_id in parent_docs_map:
@@ -309,7 +309,7 @@ def get_parent_documents(self, child_chunks: List[Document]) -> List[Document]:
     return parent_docs
 ```
 
-**去重逻辑**：
-1. **统计相关性**: 计算每个父文档被匹配的子块数量
-2. **按相关性排序**: 匹配子块越多的菜谱排名越靠前
-3. **去重输出**: 每个菜谱只输出一次完整文档
+**去重邏輯**：
+1. **統計相關性**: 計算每個父文件被匹配的子塊數量
+2. **按相關性排序**: 匹配子塊越多的菜譜排名越靠前
+3. **去重輸出**: 每個菜譜只輸出一次完整文件

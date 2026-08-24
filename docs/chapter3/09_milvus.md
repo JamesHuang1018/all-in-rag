@@ -1,32 +1,32 @@
-# 第四节 Milvus介绍及多模态检索实践
+# 第四節 Milvus介紹及多模態檢索實踐
 
-## 一、简介
+## 一、簡介
 
-Milvus 是一个开源的、专为大规模向量相似性搜索和分析而设计的向量数据库。它诞生于 Zilliz 公司，并已成为 LF AI & Data 基金会的顶级项目，在AI领域拥有广泛的应用。
+Milvus 是一個開源的、專為大規模向量相似性搜尋和分析而設計的向量資料庫。它誕生於 Zilliz 公司，並已成為 LF AI & Data 基金會的頂級專案，在AI領域擁有廣泛的應用。
 
-与 FAISS、ChromaDB 等轻量级本地存储方案不同，Milvus 从设计之初就瞄准了**生产环境**。其采用云原生架构，具备高可用、高性能、易扩展的特性，能够处理十亿、百亿甚至更大规模的向量数据。
+與 FAISS、ChromaDB 等輕量級本地儲存方案不同，Milvus 從設計之初就瞄準了**生產環境**。其採用雲原生架構，具備高可用、高效能、易擴充套件的特性，能夠處理十億、百億甚至更大規模的向量資料。
 
-**官网地址**: [https://milvus.io/](https://milvus.io/)
+**官網地址**: [https://milvus.io/](https://milvus.io/)
 
 **GitHub**: [https://github.com/milvus-io/milvus](https://github.com/milvus-io/milvus)
 
-## 二、 部署安装
+## 二、 部署安裝
 
-Milvus 提供了多种部署方式，这里以 **Milvus Standalone (单机版)** 为例。
+Milvus 提供了多種部署方式，這裡以 **Milvus Standalone (單機版)** 為例。
 
-### 1. 环境准备
+### 1. 環境準備
 
-- **安装 Docker 与 Docker Compose**: 确保系统中已安装并正在运行 Docker 和 Docker Compose。如果你对 Docker 不熟悉，可以参考这篇详细的教程：[Docker 万字教程：从入门到掌握](https://mp.weixin.qq.com/s/u2es87JU5FNlGo3qDLY_ng)。
+- **安裝 Docker 與 Docker Compose**: 確保系統中已安裝並正在執行 Docker 和 Docker Compose。如果你對 Docker 不熟悉，可以參考這篇詳細的教程：[Docker 萬字教程：從入門到掌握](https://mp.weixin.qq.com/s/u2es87JU5FNlGo3qDLY_ng)。
 
-> codespace 环境自带Docker Compose无需安装
+> codespace 環境自帶Docker Compose無需安裝
 
-### 2. 下载并启动 Milvus
+### 2. 下載並啟動 Milvus
 
-在你选定的工作目录下，打开终端（Terminal）或命令行工具（PowerShell），执行以下步骤：
+在你選定的工作目錄下，開啟終端（Terminal）或命令列工具（PowerShell），執行以下步驟：
 
-**第一步：下载配置文件**
+**第一步：下載配置檔案**
 
-使用以下命令下载官方的 `docker-compose.yml` 文件。这个文件定义了 Milvus Standalone 及其运行所需的两个核心依赖服务：`etcd` 用于存储元数据，`MinIO` 用于对象存储（更多架构细节请参考[官方文档](https://milvus.io/docs/architecture_overview.md)）。
+使用以下命令下載官方的 `docker-compose.yml` 檔案。這個檔案定義了 Milvus Standalone 及其執行所需的兩個核心依賴服務：`etcd` 用於儲存後設資料，`MinIO` 用於物件儲存（更多架構細節請參考[官方文件](https://milvus.io/docs/architecture_overview.md)）。
 
 ```bash
 # macOS / Linux (使用 wget)
@@ -38,210 +38,210 @@ wget https://github.com/milvus-io/milvus/releases/download/v2.5.14/milvus-standa
 Invoke-WebRequest -Uri "https://github.com/milvus-io/milvus/releases/download/v2.5.14/milvus-standalone-docker-compose.yml" -OutFile "docker-compose.yml"
 ```
 
-**第二步：启动 Milvus 服务**
+**第二步：啟動 Milvus 服務**
 
-在 `docker-compose.yml` 文件所在的目录中，运行以下命令以后台模式启动 Milvus：
+在 `docker-compose.yml` 檔案所在的目錄中，執行以下命令以後臺模式啟動 Milvus：
 
 ```bash
 docker compose up -d
 ```
 
-Docker 将会自动拉取所需的镜像并启动三个容器：`milvus-standalone`, `milvus-minio`, 和 `milvus-etcd`。这个过程可能需要几分钟，具体取决于你的网络状况。
+Docker 將會自動拉取所需的映象並啟動三個容器：`milvus-standalone`, `milvus-minio`, 和 `milvus-etcd`。這個過程可能需要幾分鐘，具體取決於你的網路狀況。
 
-### 3. 验证安装
+### 3. 驗證安裝
 
-可以通过以下方式验证 Milvus 是否成功启动：
+可以透過以下方式驗證 Milvus 是否成功啟動：
 
-- **查看 Docker 容器**: 打开 Docker Desktop 的仪表盘 (Windows/macOS) 或在终端运行 `docker ps` 命令 (Linux)，确认三个 Milvus 相关容器（`milvus-standalone`, `milvus-minio`, `milvus-etcd`）都处于 `running` 或 `up` 状态。
-- **检查服务端口**: Milvus Standalone 默认通过 `19530` 端口提供服务，这是后续代码连接时需要用到的地址。
+- **檢視 Docker 容器**: 開啟 Docker Desktop 的儀表盤 (Windows/macOS) 或在終端執行 `docker ps` 命令 (Linux)，確認三個 Milvus 相關容器（`milvus-standalone`, `milvus-minio`, `milvus-etcd`）都處於 `running` 或 `up` 狀態。
+- **檢查服務埠**: Milvus Standalone 預設透過 `19530` 埠提供服務，這是後續程式碼連線時需要用到的地址。
 
 ### 4. 常用管理命令
 
-- **停止服务**:
+- **停止服務**:
   ```bash
   docker compose down
   ```
-  此命令会停止并移除容器，但保留存储的数据卷。
+  此命令會停止並移除容器，但保留儲存的資料卷。
 
-- **彻底清理 (停止并删除数据)**:
-  如果想彻底删除所有数据（包括向量、元数据等），可以执行以下命令：
+- **徹底清理 (停止並刪除資料)**:
+  如果想徹底刪除所有資料（包括向量、後設資料等），可以執行以下命令：
   ```bash
   docker compose down -v
   ```
 
-## 三、核心组件
+## 三、核心元件
 
 ### 3.1 Collection (集合)
 
-可以用一个图书馆的比喻来理解 Collection：
+可以用一個圖書館的比喻來理解 Collection：
 
-- **Collection (集合)**: 相当于一个**图书馆**，是所有数据的顶层容器。一个 Collection 可以包含多个 Partition，每个 Partition 可以包含多个 Entity。
-- **Partition (分区)**: 相当于图书馆里的**不同区域**（如“小说区”、“科技区”），将数据物理隔离，让检索更高效。
-- **Schema (模式)**: 相当于图书馆的**图书卡片规则**，定义了每本书（数据）必须登记哪些信息（字段）。
-- **Entity (实体)**: 相当于**一本具体的书**，是数据本身。
-- **Alias (别名)**: 相当于一个**动态的推荐书单**（如“本周精选”），它可以指向某个具体的 Collection，方便应用层调用，实现数据更新时的无缝切换。 
+- **Collection (集合)**: 相當於一個**圖書館**，是所有資料的頂層容器。一個 Collection 可以包含多個 Partition，每個 Partition 可以包含多個 Entity。
+- **Partition (分割槽)**: 相當於圖書館裡的**不同區域**（如“小說區”、“科技區”），將資料物理隔離，讓檢索更高效。
+- **Schema (模式)**: 相當於圖書館的**圖書卡片規則**，定義了每本書（資料）必須登記哪些資訊（欄位）。
+- **Entity (實體)**: 相當於**一本具體的書**，是資料本身。
+- **Alias (別名)**: 相當於一個**動態的推薦書單**（如“本週精選”），它可以指向某個具體的 Collection，方便應用層呼叫，實現資料更新時的無縫切換。 
 
-**Collection** 是 Milvus 中最基本的数据组织单位，类似于关系型数据库中的一张**表 (Table)**。是我们存储、管理和查询向量及相关元数据的容器。所有的数据操作，如插入、删除、查询等，都是围绕 Collection 展开的。
+**Collection** 是 Milvus 中最基本的資料組織單位，類似於關係型資料庫中的一張**表 (Table)**。是我們儲存、管理和查詢向量及相關後設資料的容器。所有的資料操作，如插入、刪除、查詢等，都是圍繞 Collection 展開的。
 
-一个 Collection 由其 **Schema** 定义，并包含以下重要的子概念和特性：
+一個 Collection 由其 **Schema** 定義，幷包含以下重要的子概念和特性：
 
 #### 3.1.1 Schema
 
-在创建 Collection 之前，必须先定义它的 **Schema**。 `Schema` 规定了 Collection 的数据结构，定义了其中包含的所有**字段 (Field)** 及其属性。一个设计良好的 Schema 是能够保证数据一致性并提升查询性能。
+在建立 Collection 之前，必須先定義它的 **Schema**。 `Schema` 規定了 Collection 的資料結構，定義了其中包含的所有**欄位 (Field)** 及其屬性。一個設計良好的 Schema 是能夠保證資料一致性並提升查詢效能。
 
-Schema 通常包含以下几类字段：
+Schema 通常包含以下幾類欄位：
 
-- **主键字段 (Primary Key Field)**: 每个 Collection 必须有且仅有一个主键字段，用于唯一标识每一条数据（实体）。它的值必须是唯一的，通常是整数或字符串类型。
-- **向量字段 (Vector Field)**: 用于存储核心的向量数据。一个 Collection 可以有一个或多个向量字段，以满足多模态等复杂场景的需求。
-- **标量字段 (Scalar Field)**: 用于存储除向量之外的元数据，如字符串、数字、布尔值、JSON 等。这些字段可以用于过滤查询，实现更精确的检索。
+- **主鍵欄位 (Primary Key Field)**: 每個 Collection 必須有且僅有一個主鍵欄位，用於唯一標識每一條資料（實體）。它的值必須是唯一的，通常是整數或字串型別。
+- **向量欄位 (Vector Field)**: 用於儲存核心的向量資料。一個 Collection 可以有一個或多個向量欄位，以滿足多模態等複雜場景的需求。
+- **標量欄位 (Scalar Field)**: 用於儲存除向量之外的後設資料，如字串、數字、布林值、JSON 等。這些欄位可以用於過濾查詢，實現更精確的檢索。
 
-![Schema 设计剖析](./images/3_4_1.webp)
+![Schema 設計剖析](./images/3_4_1.webp)
 
-上图以一篇新闻文章为例，展示了一个典型的多模态、混合向量 Schema 设计。它将一篇文章拆解为：唯一的 `Article (ID)`、文本元数据（如 `Title`、`Author Info`）、图像信息（`Image URL`），并为图像和摘要内容分别生成了密集向量（`Image Embedding`, `Summary Embedding`）和稀疏向量（`Summary Sparse Embedding`）。
+上圖以一篇新聞文章為例，展示了一個典型的多模態、混合向量 Schema 設計。它將一篇文章拆解為：唯一的 `Article (ID)`、文字後設資料（如 `Title`、`Author Info`）、影象資訊（`Image URL`），併為影象和摘要內容分別生成了密集向量（`Image Embedding`, `Summary Embedding`）和稀疏向量（`Summary Sparse Embedding`）。
 
-#### 3.1.2 Partition (分区)
+#### 3.1.2 Partition (分割槽)
 
-**Partition** 是 Collection 内部的一个逻辑划分。每个 Collection 在创建时都会有一个名为 `_default` 的默认分区。我们可以根据业务需求创建更多的分区，将数据按特定规则（如类别、日期等）存入不同分区。
+**Partition** 是 Collection 內部的一個邏輯劃分。每個 Collection 在建立時都會有一個名為 `_default` 的預設分割槽。我們可以根據業務需求建立更多的分割槽，將資料按特定規則（如類別、日期等）存入不同分割槽。
 
-**为什么使用分区？**
+**為什麼使用分割槽？**
 
-- **提升查询性能**: 在查询时，可以指定只在一个或几个分区内进行搜索，从而大幅减少需要扫描的数据量，显著提升检索速度。
-- **数据管理**: 便于对部分数据进行批量操作，如加载/卸载特定分区到内存，或者删除整个分区的数据。
+- **提升查詢效能**: 在查詢時，可以指定只在一個或幾個分割槽內進行搜尋，從而大幅減少需要掃描的資料量，顯著提升檢索速度。
+- **資料管理**: 便於對部分資料進行批次操作，如載入/解除安裝特定分割槽到記憶體，或者刪除整個分割槽的資料。
 
-一个 Collection 最多可以有 1024 个分区。合理利用分区是 Milvus 性能优化的重要手段之一。
+一個 Collection 最多可以有 1024 個分割槽。合理利用分割槽是 Milvus 效能最佳化的重要手段之一。
 
-#### 3.1.3 Alias (别名)
+#### 3.1.3 Alias (別名)
 
-**Alias** (别名) 是为 Collection 提供的一个“昵称”。通过为一个 Collection 设置别名，我们可以在应用程序中使用这个别名来执行所有操作，而不是直接使用真实的 Collection 名称。
+**Alias** (別名) 是為 Collection 提供的一個“暱稱”。透過為一個 Collection 設定別名，我們可以在應用程式中使用這個別名來執行所有操作，而不是直接使用真實的 Collection 名稱。
 
-**为什么使用别名？**
+**為什麼使用別名？**
 
-- **安全地更新数据**：想象一下，你需要对一个在线服务的 Collection 进行大规模的数据更新或重建索引。直接在原 Collection 上操作风险很高。正确的做法是：
-    1. 创建一个新的 Collection (`collection_v2`) 并导入、索引好所有新数据。
-    2. 将指向旧 Collection (`collection_v1`) 的别名（例如 `my_app_collection`）原子性地切换到新 Collection (`collection_v2`) 上。
-- **代码解耦**：整个切换过程对上层应用完全透明，无需修改任何代码或重启服务，实现了数据的平滑无缝升级。
+- **安全地更新資料**：想象一下，你需要對一個線上服務的 Collection 進行大規模的資料更新或重建索引。直接在原 Collection 上操作風險很高。正確的做法是：
+    1. 建立一個新的 Collection (`collection_v2`) 並匯入、索引好所有新資料。
+    2. 將指向舊 Collection (`collection_v1`) 的別名（例如 `my_app_collection`）原子性地切換到新 Collection (`collection_v2`) 上。
+- **程式碼解耦**：整個切換過程對上層應用完全透明，無需修改任何程式碼或重啟服務，實現了資料的平滑無縫升級。
 
 ### 3.2 索引 (Index)
 
-如果说 Collection 是 Milvus 的骨架，那么**索引 (Index)** 就是其加速检索的神经系统。从宏观上看，索引本身就是一种**为了加速查询而设计的复杂数据结构**。对向量数据创建索引后，Milvus 可以极大地提升向量相似性搜索的速度，代价是会占用额外的存储和内存资源。
+如果說 Collection 是 Milvus 的骨架，那麼**索引 (Index)** 就是其加速檢索的神經系統。從宏觀上看，索引本身就是一種**為了加速查詢而設計的複雜資料結構**。對向量資料建立索引後，Milvus 可以極大地提升向量相似性搜尋的速度，代價是會佔用額外的儲存和記憶體資源。
 
-![Milvus 索引结构与工作原理](./images/3_4_2.webp)
+![Milvus 索引結構與工作原理](./images/3_4_2.webp)
 
-上图清晰地展示了 Milvus 向量索引的内部组件及其工作流程：
-- **数据结构**：这是索引的骨架，定义了向量的组织方式（如 HNSW 中的图结构）。
-- **量化**(可选)：数据压缩技术，通过降低向量精度来减少内存占用和加速计算。
-- **结果精炼**(可选)：在找到初步候选集后，进行更精确的计算以优化最终结果。
+上圖清晰地展示了 Milvus 向量索引的內部元件及其工作流程：
+- **資料結構**：這是索引的骨架，定義了向量的組織方式（如 HNSW 中的圖結構）。
+- **量化**(可選)：資料壓縮技術，透過降低向量精度來減少記憶體佔用和加速計算。
+- **結果精煉**(可選)：在找到初步候選集後，進行更精確的計算以最佳化最終結果。
 
-Milvus 支持对标量字段和向量字段分别创建索引。
+Milvus 支援對標量欄位和向量欄位分別建立索引。
 
-- **标量字段索引**：主要用于加速元数据过滤，常用的有 `INVERTED`、`BITMAP` 等。通常使用推荐的索引类型即可。
-- **向量字段索引**：这是 Milvus 的核心。选择合适的向量索引是在查询性能、召回率和内存占用之间做出权衡的艺术。
+- **標量欄位索引**：主要用於加速後設資料過濾，常用的有 `INVERTED`、`BITMAP` 等。通常使用推薦的索引型別即可。
+- **向量欄位索引**：這是 Milvus 的核心。選擇合適的向量索引是在查詢效能、召回率和記憶體佔用之間做出權衡的藝術。
 
-#### 3.2.1 主要向量索引类型
+#### 3.2.1 主要向量索引型別
 
-Milvus 提供了多种向量索引算法，以适应不同的应用场景。以下是几种最核心的类型：
+Milvus 提供了多種向量索引演算法，以適應不同的應用場景。以下是幾種最核心的型別：
 
-- **FLAT (精确查找)**
-  - **原理**：暴力搜索（Brute-force Search）。它会计算查询向量与集合中所有向量之间的实际距离，返回最精确的结果。
-  - **优点**：100% 的召回率，结果最准确。
-  - **缺点**：速度慢，内存占用大，不适合海量数据。
-  - **适用场景**：对精度要求极高，且数据规模较小（百万级以内）的场景。
+- **FLAT (精確查詢)**
+  - **原理**：暴力搜尋（Brute-force Search）。它會計算查詢向量與集合中所有向量之間的實際距離，返回最精確的結果。
+  - **優點**：100% 的召回率，結果最準確。
+  - **缺點**：速度慢，記憶體佔用大，不適合海量資料。
+  - **適用場景**：對精度要求極高，且資料規模較小（百萬級以內）的場景。
 
-- **IVF 系列 (倒排文件索引)**
-  - **原理**：类似于书籍的目录。它首先通过聚类将所有向量分成多个“桶”(`nlist`)，查询时，先找到最相似的几个“桶”，然后只在这几个桶内进行精确搜索。`IVF_FLAT`、`IVF_SQ8`、`IVF_PQ` 是其不同变体，主要区别在于是否对桶内向量进行了压缩（量化）。
-  - **优点**：通过缩小搜索范围，极大地提升了检索速度，是性能和效果之间很好的平衡。
-  - **缺点**：召回率不是100%，因为相关向量可能被分到了未被搜索的桶中。
-  - **适用场景**：通用场景，尤其适合需要高吞吐量的大规模数据集。
+- **IVF 系列 (倒排檔案索引)**
+  - **原理**：類似於書籍的目錄。它首先透過聚類將所有向量分成多個“桶”(`nlist`)，查詢時，先找到最相似的幾個“桶”，然後只在這幾個桶內進行精確搜尋。`IVF_FLAT`、`IVF_SQ8`、`IVF_PQ` 是其不同變體，主要區別在於是否對桶內向量進行了壓縮（量化）。
+  - **優點**：透過縮小搜尋範圍，極大地提升了檢索速度，是效能和效果之間很好的平衡。
+  - **缺點**：召回率不是100%，因為相關向量可能被分到了未被搜尋的桶中。
+  - **適用場景**：通用場景，尤其適合需要高吞吐量的大規模資料集。
 
-- **HNSW (基于图的索引)**
-  - **原理**：构建一个多层的邻近图。查询时从最上层的稀疏图开始，快速定位到目标区域，然后在下层的密集图中进行精确搜索。
-  - **优点**：检索速度极快，召回率高，尤其擅长处理高维数据和低延迟查询。
-  - **缺点**：内存占用非常大，构建索引的时间也较长。
-  - **适用场景**：对查询延迟有严格要求（如实时推荐、在线搜索）的场景。
+- **HNSW (基於圖的索引)**
+  - **原理**：構建一個多層的鄰近圖。查詢時從最上層的稀疏圖開始，快速定位到目標區域，然後在下層的密集圖中進行精確搜尋。
+  - **優點**：檢索速度極快，召回率高，尤其擅長處理高維資料和低延遲查詢。
+  - **缺點**：記憶體佔用非常大，構建索引的時間也較長。
+  - **適用場景**：對查詢延遲有嚴格要求（如實時推薦、線上搜尋）的場景。
 
-- **DiskANN (基于磁盘的索引)**
-  - **原理**：一种为在 SSD 等高速磁盘上运行而优化的图索引。
-  - **优点**：支持远超内存容量的海量数据集（十亿级甚至更多），同时保持较低的查询延迟。
-  - **缺点**：相比纯内存索引，延迟稍高。
-  - **适用场景**：数据规模巨大，无法全部加载到内存的场景。
+- **DiskANN (基於磁碟的索引)**
+  - **原理**：一種為在 SSD 等高速磁碟上執行而最佳化的圖索引。
+  - **優點**：支援遠超記憶體容量的海量資料集（十億級甚至更多），同時保持較低的查詢延遲。
+  - **缺點**：相比純記憶體索引，延遲稍高。
+  - **適用場景**：資料規模巨大，無法全部載入到記憶體的場景。
 
-#### 3.2.2 如何选择索引？
+#### 3.2.2 如何選擇索引？
 
-选择索引没有唯一的“最佳答案”，需要根据业务场景在**数据规模、内存限制、查询性能和召回率**之间进行权衡。
+選擇索引沒有唯一的“最佳答案”，需要根據業務場景在**資料規模、記憶體限制、查詢效能和召回率**之間進行權衡。
 
-| 场景 | 推荐索引 | 备注 |
+| 場景 | 推薦索引 | 備註 |
 | :--- | :--- | :--- |
-| 数据可完全载入内存，追求低延迟 | **HNSW** | 内存占用较大，但查询性能和召回率都很优秀。 |
-| 数据可完全载入内存，追求高吞吐 | **IVF_FLAT / IVF_SQ8** | 性能和资源消耗的平衡之选。 |
-| 数据量巨大，无法载入内存 | **DiskANN** | 在 SSD 上性能优异，专为海量数据设计。 |
-| 追求 100% 准确率，数据量不大 | **FLAT** | 暴力搜索，确保结果最精确。 |
+| 資料可完全載入記憶體，追求低延遲 | **HNSW** | 記憶體佔用較大，但查詢效能和召回率都很優秀。 |
+| 資料可完全載入記憶體，追求高吞吐 | **IVF_FLAT / IVF_SQ8** | 效能和資源消耗的平衡之選。 |
+| 資料量巨大，無法載入記憶體 | **DiskANN** | 在 SSD 上效能優異，專為海量資料設計。 |
+| 追求 100% 準確率，資料量不大 | **FLAT** | 暴力搜尋，確保結果最精確。 |
 
-在实际应用中，通常需要通过测试来找到最适合自己数据和查询模式的索引类型及其参数。
+在實際應用中，通常需要透過測試來找到最適合自己資料和查詢模式的索引型別及其引數。
 
-### 3.3 检索
+### 3.3 檢索
 
-#### 3.3.1 基础向量检索 (ANN Search)
+#### 3.3.1 基礎向量檢索 (ANN Search)
 
-拥有了数据容器 (Collection) 和检索引擎 (Index) 后，最后一步就是从海量数据中高效地检索信息。这是 Milvus 的核心功能之一，**近似最近邻 (Approximate Nearest Neighbor, ANN) 检索**。与需要计算全部数据的暴力检索（Brute-force Search）不同，ANN 检索利用预先构建好的索引，能够极速地从海量数据中找到与查询向量最相似的 Top-K 个结果。这是一种在速度和精度之间取得极致平衡的策略。
+擁有了資料容器 (Collection) 和檢索引擎 (Index) 後，最後一步就是從海量資料中高效地檢索資訊。這是 Milvus 的核心功能之一，**近似最近鄰 (Approximate Nearest Neighbor, ANN) 檢索**。與需要計算全部資料的暴力檢索（Brute-force Search）不同，ANN 檢索利用預先構建好的索引，能夠極速地從海量資料中找到與查詢向量最相似的 Top-K 個結果。這是一種在速度和精度之間取得極致平衡的策略。
 
-- **主要参数**:
-  - `anns_field`: 指定要在哪个向量字段上进行检索。
-  - `data`: 传入一个或多个查询向量。
-  - `limit` (或 `top_k`): 指定需要返回的最相似结果的数量。
-  - `search_params`: 指定检索时使用的参数，例如距离计算方式 (`metric_type`) 和索引相关的查询参数。
+- **主要引數**:
+  - `anns_field`: 指定要在哪個向量欄位上進行檢索。
+  - `data`: 傳入一個或多個查詢向量。
+  - `limit` (或 `top_k`): 指定需要返回的最相似結果的數量。
+  - `search_params`: 指定檢索時使用的引數，例如距離計算方式 (`metric_type`) 和索引相關的查詢引數。
 
-#### 3.3.2 增强检索
+#### 3.3.2 增強檢索
 
-在基础的 ANN 检索之上，Milvus 提供了多种增强检索功能，以满足更复杂的业务需求。
+在基礎的 ANN 檢索之上，Milvus 提供了多種增強檢索功能，以滿足更復雜的業務需求。
 
-**过滤检索 (Filtered Search)**
+**過濾檢索 (Filtered Search)**
 
-在实际应用中，我们很少只进行单纯的向量检索。更常见的需求是“在满足特定条件的向量中，查找最相似的结果”，这就是过滤检索。它将**向量相似性检索**与**标量字段过滤**结合在一起。
+在實際應用中，我們很少只進行單純的向量檢索。更常見的需求是“在滿足特定條件的向量中，查詢最相似的結果”，這就是過濾檢索。它將**向量相似性檢索**與**標量欄位過濾**結合在一起。
 
-- **工作原理**：先根据提供的过滤表达式 (`filter`) 筛选出符合条件的实体，然后仅在这个子集内执行 ANN 检索。这极大地提高了查询的精准度。
-- **应用示例**：
-  - **电商**："检索与这件红色连衣裙最相似的商品，但只看价格低于500元且有库存的。"
-  - **知识库**："查找与‘人工智能’相关的文档，但只从‘技术’分类下、且发布于2023年之后的文章中寻找。"
+- **工作原理**：先根據提供的過濾表示式 (`filter`) 篩選出符合條件的實體，然後僅在這個子集內執行 ANN 檢索。這極大地提高了查詢的精準度。
+- **應用示例**：
+  - **電商**："檢索與這件紅色連衣裙最相似的商品，但只看價格低於500元且有庫存的。"
+  - **知識庫**："查詢與‘人工智慧’相關的文件，但只從‘技術’分類下、且釋出於2023年之後的文章中尋找。"
 
-**范围检索 (Range Search)**
+**範圍檢索 (Range Search)**
 
-有时我们关心的不是最相似的 Top-K 个结果，而是“所有与查询向量的相似度在特定范围内的结果”。
+有時我們關心的不是最相似的 Top-K 個結果，而是“所有與查詢向量的相似度在特定範圍內的結果”。
 
-- **工作原理**：范围检索允许定义一个距离（或相似度）的阈值范围。Milvus 会返回所有与查询向量的距离落在这个范围内的实体。
-- **应用示例**：
-  - **人脸识别**："查找所有与目标人脸相似度超过 0.9 的人脸"，用于身份验证。
-  - **异常检测**："查找所有与正常样本向量距离过大的数据点"，用于发现异常。
+- **工作原理**：範圍檢索允許定義一個距離（或相似度）的閾值範圍。Milvus 會返回所有與查詢向量的距離落在這個範圍內的實體。
+- **應用示例**：
+  - **人臉識別**："查詢所有與目標人臉相似度超過 0.9 的人臉"，用於身份驗證。
+  - **異常檢測**："查詢所有與正常樣本向量距離過大的資料點"，用於發現異常。
 
-**多向量混合检索 (Hybrid Search)**
+**多向量混合檢索 (Hybrid Search)**
 
-这是 Milvus 提供的一种极其强大的高级检索模式，它允许在一个请求中同时检索**多个向量字段**，并将结果智能地融合在一起。
+這是 Milvus 提供的一種極其強大的高階檢索模式，它允許在一個請求中同時檢索**多個向量欄位**，並將結果智慧地融合在一起。
 
 - **工作原理**：
-  1. **并行检索**：应用针对不同的向量字段（如一个用于文本语义的密集向量，一个用于关键词匹配的稀疏向量，一个用于图像内容的多模态向量）分别发起 ANN 检索请求。
-  2. **结果融合 (Rerank)**：Milvus 使用一个重排策略（Reranker）将来自不同检索流的结果合并成一个统一的、更高质量的排序列表。常用的策略有 `RRFRanker`（平衡各方结果）和 `WeightedRanker`（可为特定字段结果加权）。
+  1. **並行檢索**：應用針對不同的向量欄位（如一個用於文字語義的密集向量，一個用於關鍵詞匹配的稀疏向量，一個用於影象內容的多模態向量）分別發起 ANN 檢索請求。
+  2. **結果融合 (Rerank)**：Milvus 使用一個重排策略（Reranker）將來自不同檢索流的結果合併成一個統一的、更高質量的排序列表。常用的策略有 `RRFRanker`（平衡各方結果）和 `WeightedRanker`（可為特定欄位結果加權）。
 
-- **应用示例**：
-  - **多模态商品检索**：用户输入文本“安静舒适的白色耳机”，系统可以同时检索商品的**文本描述向量**和**图片内容向量**，返回最匹配的商品。
-  - **增强型 RAG**: 结合**密集向量**（捕捉语义）和**稀疏向量**（精确匹配关键词），实现比单一向量更精准的文档检索效果。
+- **應用示例**：
+  - **多模態商品檢索**：使用者輸入文字“安靜舒適的白色耳機”，系統可以同時檢索商品的**文字描述向量**和**圖片內容向量**，返回最匹配的商品。
+  - **增強型 RAG**: 結合**密集向量**（捕捉語義）和**稀疏向量**（精確匹配關鍵詞），實現比單一向量更精準的文件檢索效果。
 
-**分组检索 (Grouping Search)**
+**分組檢索 (Grouping Search)**
 
-分组检索解决了一个常见的痛点：检索结果多样性不足。想象一下，你检索“机器学习”，返回的前10篇文章都来自同一本教科书不同章节。这显然不是理想的结果。
+分組檢索解決了一個常見的痛點：檢索結果多樣性不足。想象一下，你檢索“機器學習”，返回的前10篇文章都來自同一本教科書不同章節。這顯然不是理想的結果。
 
-- **工作原理**：分组检索允许指定一个字段（如 `document_id`）对结果进行分组。Milvus 会在检索后，确保返回的结果中每个组（每个 `document_id`）只出现一次（或指定的次数），且返回的是该组内与查询最相似的那个实体。
-- **应用示例**：
-  - **视频检索**：检索“可爱的猫咪”，确保返回的视频来自不同的博主。
-  - **文档检索**：检索“数据库索引”，确保返回的结果来自不同的书籍或来源。
+- **工作原理**：分組檢索允許指定一個欄位（如 `document_id`）對結果進行分組。Milvus 會在檢索後，確保返回的結果中每個組（每個 `document_id`）只出現一次（或指定的次數），且返回的是該組內與查詢最相似的那個實體。
+- **應用示例**：
+  - **影片檢索**：檢索“可愛的貓咪”，確保返回的影片來自不同的博主。
+  - **文件檢索**：檢索“資料庫索引”，確保返回的結果來自不同的書籍或來源。
 
-通过这些灵活的检索功能组合，开发者可以构建出满足各种复杂业务需求的向量检索应用。
+透過這些靈活的檢索功能組合，開發者可以構建出滿足各種複雜業務需求的向量檢索應用。
 
-## 四、milvus多模态实践
+## 四、milvus多模態實踐
 
-在本节中，我们将通过一个完整的示例，演示如何使用 Milvus 和 Visualized-BGE 模型构建一个端到端的图文多模态检索引擎。
+在本節中，我們將透過一個完整的示例，演示如何使用 Milvus 和 Visualized-BGE 模型構建一個端到端的圖文多模態檢索引擎。
 
-### 4.1 初始化与工具定义
+### 4.1 初始化與工具定義
 
-首先导入所有必需的库，定义好模型路径、数据目录等常量。为了代码的整洁和复用，将 Visualized-BGE 模型的加载和编码逻辑封装在一个 `Encoder` 类中，并定义了一个 `visualize_results` 函数用于后续的结果可视化。
+首先匯入所有必需的庫，定義好模型路徑、資料目錄等常量。為了程式碼的整潔和複用，將 Visualized-BGE 模型的載入和編碼邏輯封裝在一個 `Encoder` 類中，並定義了一個 `visualize_results` 函式用於後續的結果視覺化。
 
 ```python
 import os
@@ -254,16 +254,16 @@ import numpy as np
 import cv2
 from PIL import Image
 
-# 1. 初始化设置
+# 1. 初始化設定
 MODEL_NAME = "BAAI/bge-base-en-v1.5"
 MODEL_PATH = "../../models/bge/Visualized_base_en_v1.5.pth"
 DATA_DIR = "../../data/C3"
 COLLECTION_NAME = "multimodal_demo"
 MILVUS_URI = "http://localhost:19530"
 
-# 2. 定义工具 (编码器和可视化函数)
+# 2. 定義工具 (編碼器和視覺化函式)
 class Encoder:
-    """编码器类，用于将图像和文本编码为向量。"""
+    """編碼器類，用於將影象和文字編碼為向量。"""
     def __init__(self, model_name: str, model_path: str):
         self.model = Visualized_BGE(model_name_bge=model_name, model_weight=model_path)
         self.model.eval()
@@ -279,13 +279,13 @@ class Encoder:
         return query_emb.tolist()[0]
 
 def visualize_results(query_image_path: str, retrieved_images: list, img_height: int = 300, img_width: int = 300, row_count: int = 3) -> np.ndarray:
-    """从检索到的图像列表创建一个全景图用于可视化。"""
+    """從檢索到的影象列表建立一個全景圖用於視覺化。"""
     panoramic_width = img_width * row_count
     panoramic_height = img_height * row_count
     panoramic_image = np.full((panoramic_height, panoramic_width, 3), 255, dtype=np.uint8)
     query_display_area = np.full((panoramic_height, img_width, 3), 255, dtype=np.uint8)
 
-    # 处理查询图像
+    # 處理查詢影象
     query_pil = Image.open(query_image_path).convert("RGB")
     query_cv = np.array(query_pil)[:, :, ::-1]
     resized_query = cv2.resize(query_cv, (img_width, img_height))
@@ -293,7 +293,7 @@ def visualize_results(query_image_path: str, retrieved_images: list, img_height:
     query_display_area[img_height * (row_count - 1):, :] = cv2.resize(bordered_query, (img_width, img_height))
     cv2.putText(query_display_area, "Query", (10, panoramic_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-    # 处理检索到的图像
+    # 處理檢索到的影象
     for i, img_path in enumerate(retrieved_images):
         row, col = i // row_count, i % row_count
         start_row, start_col = row * img_height, col * img_width
@@ -304,62 +304,62 @@ def visualize_results(query_image_path: str, retrieved_images: list, img_height:
         bordered_retrieved = cv2.copyMakeBorder(resized_retrieved, 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=(0, 0, 0))
         panoramic_image[start_row:start_row + img_height, start_col:start_col + img_width] = bordered_retrieved
         
-        # 添加索引号
+        # 新增索引號
         cv2.putText(panoramic_image, str(i), (start_col + 10, start_row + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
     return np.hstack([query_display_area, panoramic_image])
 ```
 
-### 4.2 创建 Collection
+### 4.2 建立 Collection
 
-这是与 Milvus 交互的开始。首先初始化 Milvus 客户端，然后定义 Collection 的 Schema，它规定了集合的数据结构。
+這是與 Milvus 互動的開始。首先初始化 Milvus 客戶端，然後定義 Collection 的 Schema，它規定了集合的資料結構。
 
 ```python
-# 3. 初始化客户端
-print("--> 正在初始化编码器和Milvus客户端...")
+# 3. 初始化客戶端
+print("--> 正在初始化編碼器和Milvus客戶端...")
 encoder = Encoder(MODEL_NAME, MODEL_PATH)
 milvus_client = MilvusClient(uri=MILVUS_URI)
 
-# 4. 创建 Milvus Collection
-print(f"\n--> 正在创建 Collection '{COLLECTION_NAME}'")
+# 4. 建立 Milvus Collection
+print(f"\n--> 正在建立 Collection '{COLLECTION_NAME}'")
 if milvus_client.has_collection(COLLECTION_NAME):
     milvus_client.drop_collection(COLLECTION_NAME)
-    print(f"已删除已存在的 Collection: '{COLLECTION_NAME}'")
+    print(f"已刪除已存在的 Collection: '{COLLECTION_NAME}'")
 
 image_list = glob(os.path.join(DATA_DIR, "dragon", "*.png"))
 if not image_list:
-    raise FileNotFoundError(f"在 {DATA_DIR}/dragon/ 中未找到任何 .png 图像。")
+    raise FileNotFoundError(f"在 {DATA_DIR}/dragon/ 中未找到任何 .png 影象。")
 dim = len(encoder.encode_image(image_list[0]))
 
 fields = [
-    # 主键字段，设置自增 (auto_id=True)
+    # 主鍵欄位，設定自增 (auto_id=True)
     FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
-    # 向量字段，维度与模型的输出向量维度一致
+    # 向量欄位，維度與模型的輸出向量維度一致
     FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=dim),
-    # 存储原图像路径的标量字段，最大长度限制 512 字符
+    # 儲存原影象路徑的標量欄位，最大長度限制 512 字元
     FieldSchema(name="image_path", dtype=DataType.VARCHAR, max_length=512),
 ]
 
-# 创建集合 Schema
-schema = CollectionSchema(fields, description="多模态图文检索")
-print("Schema 结构:")
+# 建立集合 Schema
+schema = CollectionSchema(fields, description="多模態圖文檢索")
+print("Schema 結構:")
 print(schema)
 
-# 创建集合
+# 建立集合
 milvus_client.create_collection(collection_name=COLLECTION_NAME, schema=schema)
-print(f"成功创建 Collection: '{COLLECTION_NAME}'")
-print("Collection 结构:")
+print(f"成功建立 Collection: '{COLLECTION_NAME}'")
+print("Collection 結構:")
 print(milvus_client.describe_collection(collection_name=COLLECTION_NAME))
 ```
 
-**输出结果：**
+**輸出結果：**
 ```bash
---> 正在创建 Collection 'multimodal_demo'
+--> 正在建立 Collection 'multimodal_demo'
 
-Schema 结构:
+Schema 結構:
 {
     'auto_id': True, 
-    'description': '多模态图文检索', 
+    'description': '多模態圖文檢索', 
     'fields': [
         {'name': 'id', 'description': '', 'type': <DataType.INT64: 5>, 'is_primary': True, 'auto_id': True}, 
         {'name': 'vector', 'description': '', 'type': <DataType.FLOAT_VECTOR: 101>, 'params': {'dim': 768}}, 
@@ -368,14 +368,14 @@ Schema 结构:
     'enable_dynamic_field': False
 }
 
-成功创建 Collection: 'multimodal_demo'
+成功建立 Collection: 'multimodal_demo'
 
-Collection 结构:
+Collection 結構:
 {
     'collection_name': 'multimodal_demo', 
     'auto_id': True, 
     'num_shards': 1, 
-    'description': '多模态图文检索', 
+    'description': '多模態圖文檢索', 
     'fields': [
         {'field_id': 100, 'name': 'id', 'description': '', 'type': <DataType.INT64: 5>, 'params': {}, 'auto_id': True, 'is_primary': True}, 
         {'field_id': 101, 'name': 'vector', 'description': '', 'type': <DataType.FLOAT_VECTOR: 101>, 'params': {'dim': 768}}, 
@@ -393,32 +393,32 @@ Collection 结构:
 }
 ```
 
-上面的输出详细展示了刚刚创建的 `multimodal_demo` Collection 的完整结构。其 **Schema** 包含了三个核心字段（**Field**）：一个自增的 `id` 作为**主键**，一个 768 维的 `vector` **向量字段**用于存储图像嵌入，以及一个 `image_path` **标量字段**来记录原始图片路径。
+上面的輸出詳細展示了剛剛建立的 `multimodal_demo` Collection 的完整結構。其 **Schema** 包含了三個核心欄位（**Field**）：一個自增的 `id` 作為**主鍵**，一個 768 維的 `vector` **向量欄位**用於儲存影象嵌入，以及一個 `image_path` **標量欄位**來記錄原始圖片路徑。
 
-### 4.3 准备并插入数据
+### 4.3 準備並插入資料
 
-创建好 Collection 后，需要将数据填充进去。通过遍历指定目录下的所有图片，将它们逐一编码成向量，然后与图片路径一起组织成符合 Schema 结构的格式，最后批量插入到 Collection 中。
+建立好 Collection 後，需要將資料填充進去。透過遍歷指定目錄下的所有圖片，將它們逐一編碼成向量，然後與圖片路徑一起組織成符合 Schema 結構的格式，最後批次插入到 Collection 中。
 
 ```python
-# 5. 准备并插入数据
-print(f"\n--> 正在向 '{COLLECTION_NAME}' 插入数据")
+# 5. 準備並插入資料
+print(f"\n--> 正在向 '{COLLECTION_NAME}' 插入資料")
 data_to_insert = []
-for image_path in tqdm(image_list, desc="生成图像嵌入"):
+for image_path in tqdm(image_list, desc="生成影象嵌入"):
     vector = encoder.encode_image(image_path)
     data_to_insert.append({"vector": vector, "image_path": image_path})
 
 if data_to_insert:
     result = milvus_client.insert(collection_name=COLLECTION_NAME, data=data_to_insert)
-    print(f"成功插入 {result['insert_count']} 条数据。")
+    print(f"成功插入 {result['insert_count']} 條資料。")
 ```
 
-### 4.4 创建索引
+### 4.4 建立索引
 
-为了实现快速检索，需要为向量字段创建索引。这里选择 `HNSW` 索引，它在召回率和查询性能之间有着很好的平衡。创建索引后，必须调用 `load_collection` 将集合加载到内存中才能进行搜索。
+為了實現快速檢索，需要為向量欄位建立索引。這裡選擇 `HNSW` 索引，它在召回率和查詢效能之間有著很好的平衡。建立索引後，必須呼叫 `load_collection` 將集合載入到記憶體中才能進行搜尋。
 
 ```python
-# 6. 创建索引
-print(f"\n--> 正在为 '{COLLECTION_NAME}' 创建索引")
+# 6. 建立索引
+print(f"\n--> 正在為 '{COLLECTION_NAME}' 建立索引")
 index_params = milvus_client.prepare_index_params()
 index_params.add_index(
     field_name="vector",
@@ -427,33 +427,33 @@ index_params.add_index(
     params={"M": 16, "efConstruction": 256}
 )
 milvus_client.create_index(collection_name=COLLECTION_NAME, index_params=index_params)
-print("成功为向量字段创建 HNSW 索引。")
-print("索引详情:")
+print("成功為向量欄位建立 HNSW 索引。")
+print("索引詳情:")
 print(milvus_client.describe_index(collection_name=COLLECTION_NAME, index_name="vector"))
 milvus_client.load_collection(collection_name=COLLECTION_NAME)
-print("已加载 Collection 到内存中。")
+print("已載入 Collection 到記憶體中。")
 ```
 
-**输出结果：**
+**輸出結果：**
 ```bash
---> 正在为 'multimodal_demo' 创建索引
-成功为向量字段创建 HNSW 索引。
-索引详情:
+--> 正在為 'multimodal_demo' 建立索引
+成功為向量欄位建立 HNSW 索引。
+索引詳情:
 {'M': '16', 'efConstruction': '256', 'metric_type': 'COSINE', 'index_type': 'HNSW', 'field_name': 'vector', 'index_name': 'vector', 'total_rows': 0, 'indexed_rows': 0, 'pending_index_rows': 0, 'state': 'Finished'}
-已加载 Collection 到内存中。
+已載入 Collection 到記憶體中。
 ```
 
-可以看出，索引创建成功，在 `vector` 字段上成功创建了 `HNSW` 索引，并使用 `COSINE` 作为距离度量。`M: '16'` 和 `efConstruction: '256'` 是 HNSW 索引的两个关键参数，分别控制着图中每个节点的最大连接数和索引构建时的搜索范围，这些参数直接影响检索的性能和准确性。`state: 'Finished'` 状态表明索引已成功构建。
+可以看出，索引建立成功，在 `vector` 欄位上成功建立了 `HNSW` 索引，並使用 `COSINE` 作為距離度量。`M: '16'` 和 `efConstruction: '256'` 是 HNSW 索引的兩個關鍵引數，分別控制著圖中每個節點的最大連線數和索引構建時的搜尋範圍，這些引數直接影響檢索的效能和準確性。`state: 'Finished'` 狀態表明索引已成功構建。
 
-### 4.5 执行多模态检索
+### 4.5 執行多模態檢索
 
-这里通过定义一个包含图片和文本的组合查询，将其编码为查询向量，然后调用 `search` 方法在 Milvus 中执行近似最近邻搜索。
+這裡透過定義一個包含圖片和文字的組合查詢，將其編碼為查詢向量，然後呼叫 `search` 方法在 Milvus 中執行近似最近鄰搜尋。
 
 ```python
-# 7. 执行多模态检索
-print(f"\n--> 正在 '{COLLECTION_NAME}' 中执行检索")
+# 7. 執行多模態檢索
+print(f"\n--> 正在 '{COLLECTION_NAME}' 中執行檢索")
 query_image_path = os.path.join(DATA_DIR, "dragon", "query.png")
-query_text = "一条龙"
+query_text = "一條龍"
 query_vector = encoder.encode_query(image_path=query_image_path, text=query_text)
 
 search_results = milvus_client.search(
@@ -461,57 +461,57 @@ search_results = milvus_client.search(
     data=[query_vector],
     output_fields=["image_path"],
     limit=5,
-    # ef: 搜索时的节点遍历深度，值越大召回率越高但耗时越长
+    # ef: 搜尋時的節點遍歷深度，值越大召回率越高但耗時越長
     search_params={"metric_type": "COSINE", "params": {"ef": 128}}
 )[0]
 
 retrieved_images = []
-print("检索结果:")
+print("檢索結果:")
 for i, hit in enumerate(search_results):
-    print(f"  Top {i+1}: ID={hit['id']}, 距离={hit['distance']:.4f}, 路径='{hit['entity']['image_path']}'")
+    print(f"  Top {i+1}: ID={hit['id']}, 距離={hit['distance']:.4f}, 路徑='{hit['entity']['image_path']}'")
     retrieved_images.append(hit['entity']['image_path'])
 ```
 
-**输出结果：**
+**輸出結果：**
 
 ```bash
---> 正在 'multimodal_demo' 中执行检索
-检索结果:
-  Top 1: ID=459243798403756667, 距离=0.9411, 路径='../../data/C3\dragon\query.png'
-  Top 2: ID=459243798403756668, 距离=0.5818, 路径='../../data/C3\dragon\dragon02.png'
-  Top 3: ID=459243798403756671, 距离=0.5731, 路径='../../data/C3\dragon\dragon05.png'
-  Top 4: ID=459243798403756670, 距离=0.4894, 路径='../../data/C3\dragon\dragon04.png'
-  Top 5: ID=459243798403756669, 距离=0.4100, 路径='../../data/C3\dragon\dragon03.png'
+--> 正在 'multimodal_demo' 中執行檢索
+檢索結果:
+  Top 1: ID=459243798403756667, 距離=0.9411, 路徑='../../data/C3\dragon\query.png'
+  Top 2: ID=459243798403756668, 距離=0.5818, 路徑='../../data/C3\dragon\dragon02.png'
+  Top 3: ID=459243798403756671, 距離=0.5731, 路徑='../../data/C3\dragon\dragon05.png'
+  Top 4: ID=459243798403756670, 距離=0.4894, 路徑='../../data/C3\dragon\dragon04.png'
+  Top 5: ID=459243798403756669, 距離=0.4100, 路徑='../../data/C3\dragon\dragon03.png'
 ```
 
-这段输出展示了与图文组合查询最相似的5个**实体 (Entity)**。`distance` 字段代表了**余弦相似度**，值越接近 1 表示越相似。可以看到，`Top 1` 结果正是查询图片本身，其相似度得分最高（0.9411），这说明了检索的有效性。其余结果也都是龙的图片，并按相似度从高到低精确排列。
+這段輸出展示了與圖文組合查詢最相似的5個**實體 (Entity)**。`distance` 欄位代表了**餘弦相似度**，值越接近 1 表示越相似。可以看到，`Top 1` 結果正是查詢圖片本身，其相似度得分最高（0.9411），這說明了檢索的有效性。其餘結果也都是龍的圖片，並按相似度從高到低精確排列。
 
-> **为什么查询图片本身，其余弦相似度不是 1.0 而是 0.9411 呢？**
-> 在插入数据时，数据库里存放的是通过 `encode_image` 得到的**纯图像嵌入向量**（只包含视觉特征）；而在检索时，输入的查询向量是通过 `encode_query` 生成的**图文联合嵌入向量**（融合了文本“一条龙”的信息和图像的特征）。由于查询向量被文本语义进行了“偏置”，所以它与数据库中的纯视觉图像向量之间会有细微的特征差异。
+> **為什麼查詢圖片本身，其餘弦相似度不是 1.0 而是 0.9411 呢？**
+> 在插入資料時，資料庫裡存放的是透過 `encode_image` 得到的**純影象嵌入向量**（只包含視覺特徵）；而在檢索時，輸入的查詢向量是透過 `encode_query` 生成的**圖文聯合嵌入向量**（融合了文字“一條龍”的資訊和影象的特徵）。由於查詢向量被文字語義進行了“偏置”，所以它與資料庫中的純視覺影象向量之間會有細微的特徵差異。
 
-### 4.6 可视化与清理
+### 4.6 視覺化與清理
 
-最后，将检索到的图片路径用于可视化，生成一张直观的结果对比图。在完成所有操作后，应该释放 Milvus 中的资源，包括从内存中卸载 Collection 和删除整个 Collection。
+最後，將檢索到的圖片路徑用於視覺化，生成一張直觀的結果對比圖。在完成所有操作後，應該釋放 Milvus 中的資源，包括從記憶體中解除安裝 Collection 和刪除整個 Collection。
 
 ```python
-# 8. 可视化与清理
+# 8. 視覺化與清理
 if not retrieved_images:
-    print("没有检索到任何图像。")
+    print("沒有檢索到任何影象。")
 else:
     panoramic_image = visualize_results(query_image_path, retrieved_images)
     combined_image_path = os.path.join(DATA_DIR, "search_result.png")
     cv2.imwrite(combined_image_path, panoramic_image)
-    print(f"结果图像已保存到: {combined_image_path}")
+    print(f"結果影象已儲存到: {combined_image_path}")
     Image.open(combined_image_path).show()
 
 milvus_client.release_collection(collection_name=COLLECTION_NAME)
-print(f"已从内存中释放 Collection: '{COLLECTION_NAME}'")
+print(f"已從記憶體中釋放 Collection: '{COLLECTION_NAME}'")
 milvus_client.drop_collection(COLLECTION_NAME)
-print(f"已删除 Collection: '{COLLECTION_NAME}'")
+print(f"已刪除 Collection: '{COLLECTION_NAME}'")
 ```
 
-![检索结果可视化](./images/3_4_3.png)
+![檢索結果視覺化](./images/3_4_3.png)
 
-通过上图可以看出，这个多模态检索引擎成功地理解了“一条龙”这个图文组合查询的意图，并从图库中找到了最相关的几张图片并进行排序。
+透過上圖可以看出，這個多模態檢索引擎成功地理解了“一條龍”這個圖文組合查詢的意圖，並從相簿中找到了最相關的幾張圖片並進行排序。
 
-> [本节完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C3/04_multi_milvus.py)
+> [本節完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C3/04_multi_milvus.py)

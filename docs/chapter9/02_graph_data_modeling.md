@@ -1,86 +1,86 @@
-# 第二节 图数据建模与Neo4j集成
+# 第二節 圖資料建模與Neo4j整合
 
-> [本节完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C9/rag_modules/graph_data_preparation.py)
+> [本節完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C9/rag_modules/graph_data_preparation.py)
 
-## 一、数据来源与转换
+## 一、資料來源與轉換
 
-### 1.1 从Markdown到图数据的转换
+### 1.1 從Markdown到圖資料的轉換
 
-本章的图数据来源于第八章中使用的Markdown格式菜谱数据。为了构建知识图谱，笔者用AI开发了一个简单的[Agent](https://github.com/datawhalechina/all-in-rag/tree/main/code/C9/agent(%E4%BB%A3%E7%A0%81%E7%B3%BBai%E7%94%9F%E6%88%90))，通过LLM将结构化的Markdown菜谱数据转换为CSV格式的图数据。
+本章的圖資料來源於第八章中使用的Markdown格式菜譜資料。為了構建知識圖譜，筆者用AI開發了一個簡單的[Agent](https://github.com/datawhalechina/all-in-rag/tree/main/code/C9/agent(%E4%BB%A3%E7%A0%81%E7%B3%BBai%E7%94%9F%E6%88%90))，透過LLM將結構化的Markdown菜譜資料轉換為CSV格式的圖資料。
 
-**转换流程**：
-1. **读取Markdown菜谱**：从第八章的数据源加载菜谱文件
-2. **LLM解析提取**：使用大语言模型识别和提取实体及关系
-3. **结构化输出**：生成nodes.csv和relationships.csv文件
-4. **图数据导入**：通过Cypher脚本导入Neo4j数据库
+**轉換流程**：
+1. **讀取Markdown菜譜**：從第八章的資料來源載入菜譜檔案
+2. **LLM解析提取**：使用大語言模型識別和提取實體及關係
+3. **結構化輸出**：生成nodes.csv和relationships.csv檔案
+4. **圖資料匯入**：透過Cypher指令碼匯入Neo4j資料庫
 
-### 1.2 图数据文件结构
+### 1.2 圖資料檔案結構
 
-转换后的图数据包含两个核心文件：
+轉換後的圖資料包含兩個核心檔案：
 
 ```
 data/C9/cypher/
-├── nodes.csv          # 节点数据（菜谱、食材、步骤等）
-├── relationships.csv  # 关系数据（菜谱-食材、菜谱-步骤等）
-└── neo4j_import.cypher # 数据导入脚本
+├── nodes.csv          # 節點資料（菜譜、食材、步驟等）
+├── relationships.csv  # 關係資料（菜譜-食材、菜譜-步驟等）
+└── neo4j_import.cypher # 資料匯入指令碼
 ```
 
-## 二、图数据模型设计
+## 二、圖資料模型設計
 
-### 2.1 实际数据结构分析
+### 2.1 實際資料結構分析
 
-基于LLM转换后的实际图数据，知识图谱包含以下核心实体类型。如果你有游戏逆向经验，可以把这些实体类型想象成虚幻引擎烹饪游戏中的对象类，节点间的关系就像对象间的指针引用：
+基於LLM轉換後的實際圖資料，知識圖譜包含以下核心實體型別。如果你有遊戲逆向經驗，可以把這些實體型別想象成虛幻引擎烹飪遊戲中的物件類，節點間的關係就像物件間的指標引用：
 
-**核心实体类型**：
-- **Recipe (菜谱)**：具体的菜品，包含难度、菜系、时间等属性
-- **Ingredient (食材)**：制作菜品所需的原料，包含分类、用量、单位等
-- **CookingStep (烹饪步骤)**：详细的制作步骤，包含方法、工具、时间估计
-- **CookingMethod (烹饪方法)**：如炒、煮、蒸、炸等烹饪技法
-- **CookingTool (烹饪工具)**：如炒锅、蒸锅、刀具等
-- **DifficultyLevel (难度等级)**：一星到五星的难度分级
-- **RecipeCategory (菜谱分类)**：素菜、荤菜、水产、早餐等分类
+**核心實體型別**：
+- **Recipe (菜譜)**：具體的菜品，包含難度、菜系、時間等屬性
+- **Ingredient (食材)**：製作菜品所需的原料，包含分類、用量、單位等
+- **CookingStep (烹飪步驟)**：詳細的製作步驟，包含方法、工具、時間估計
+- **CookingMethod (烹飪方法)**：如炒、煮、蒸、炸等烹飪技法
+- **CookingTool (烹飪工具)**：如炒鍋、蒸鍋、刀具等
+- **DifficultyLevel (難度等級)**：一星到五星的難度分級
+- **RecipeCategory (菜譜分類)**：素菜、葷菜、水產、早餐等分類
 
-**实际数据特点**：
-- **统一编码体系**：使用nodeId进行唯一标识（如201000001）
-- **多语言支持**：包含preferredTerm、fsn等多语言字段
-- **丰富属性**：每个实体包含详细的属性信息
-- **层次化结构**：从抽象概念到具体实例的层次化组织
+**實際資料特點**：
+- **統一編碼體系**：使用nodeId進行唯一標識（如201000001）
+- **多語言支援**：包含preferredTerm、fsn等多語言欄位
+- **豐富屬性**：每個實體包含詳細的屬性資訊
+- **層次化結構**：從抽象概念到具體例項的層次化組織
 
-### 2.2 实际节点模型
+### 2.2 實際節點模型
 
-基于实际数据的图数据模型：
+基於實際資料的圖資料模型：
 
 ```mermaid
 graph TB
-    %% 定义节点样式
+    %% 定義節點樣式
     classDef recipeNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef ingredientNode fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef stepNode fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
     classDef categoryNode fill:#fff3e0,stroke:#e65100,stroke-width:2px
     classDef difficultyNode fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 
-    %% 菜谱节点
-    Recipe["🍽️ Recipe<br/>菜谱节点<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>fsn: String<br/>conceptType: String<br/>synonyms: String<br/>category: String<br/>difficulty: Float<br/>cuisineType: String<br/>prepTime: String<br/>cookTime: String<br/>servings: String<br/>tags: String<br/>filePath: String"]
+    %% 菜譜節點
+    Recipe["🍽️ Recipe<br/>菜譜節點<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>fsn: String<br/>conceptType: String<br/>synonyms: String<br/>category: String<br/>difficulty: Float<br/>cuisineType: String<br/>prepTime: String<br/>cookTime: String<br/>servings: String<br/>tags: String<br/>filePath: String"]
 
-    %% 食材节点
-    Ingredient["🥬 Ingredient<br/>食材节点<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>category: String<br/>amount: String<br/>unit: String<br/>isMain: Boolean<br/>synonyms: String"]
+    %% 食材節點
+    Ingredient["🥬 Ingredient<br/>食材節點<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>category: String<br/>amount: String<br/>unit: String<br/>isMain: Boolean<br/>synonyms: String"]
 
-    %% 烹饪步骤节点
-    CookingStep["👨‍🍳 CookingStep<br/>烹饪步骤节点<br/>---<br/>nodeId: String<br/>name: String<br/>description: String<br/>stepNumber: Float<br/>methods: String<br/>tools: String<br/>timeEstimate: String"]
+    %% 烹飪步驟節點
+    CookingStep["👨‍🍳 CookingStep<br/>烹飪步驟節點<br/>---<br/>nodeId: String<br/>name: String<br/>description: String<br/>stepNumber: Float<br/>methods: String<br/>tools: String<br/>timeEstimate: String"]
 
-    %% 菜谱分类节点
-    RecipeCategory["📂 RecipeCategory<br/>菜谱分类节点<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>fsn: String"]
+    %% 菜譜分類節點
+    RecipeCategory["📂 RecipeCategory<br/>菜譜分類節點<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>fsn: String"]
 
-    %% 难度等级节点
-    DifficultyLevel["⭐ DifficultyLevel<br/>难度等级节点<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>fsn: String"]
+    %% 難度等級節點
+    DifficultyLevel["⭐ DifficultyLevel<br/>難度等級節點<br/>---<br/>nodeId: String<br/>name: String<br/>preferredTerm: String<br/>fsn: String"]
 
-    %% 关系连接
+    %% 關係連線
     Recipe -->|REQUIRES<br/>需要食材<br/>amount, unit| Ingredient
-    Recipe -->|CONTAINS_STEP<br/>包含步骤<br/>step_order| CookingStep
-    Recipe -->|BELONGS_TO_CATEGORY<br/>属于分类| RecipeCategory
-    Recipe -->|HAS_DIFFICULTY_LEVEL<br/>具有难度| DifficultyLevel
+    Recipe -->|CONTAINS_STEP<br/>包含步驟<br/>step_order| CookingStep
+    Recipe -->|BELONGS_TO_CATEGORY<br/>屬於分類| RecipeCategory
+    Recipe -->|HAS_DIFFICULTY_LEVEL<br/>具有難度| DifficultyLevel
 
-    %% 应用样式
+    %% 應用樣式
     class Recipe recipeNode
     class Ingredient ingredientNode
     class CookingStep stepNode
@@ -88,21 +88,21 @@ graph TB
     class DifficultyLevel difficultyNode
 ```
 
-**节点类型说明**：
+**節點型別說明**：
 
-- **🍽️ Recipe (菜谱节点)**: 核心实体，包含菜谱的完整信息
-- **🥬 Ingredient (食材节点)**: 制作菜谱所需的食材信息
-- **👨‍🍳 CookingStep (烹饪步骤节点)**: 详细的制作步骤和方法
-- **📂 RecipeCategory (菜谱分类节点)**: 菜品分类（素菜、荤菜、水产等）
-- **⭐ DifficultyLevel (难度等级节点)**: 制作难度分级（一星到五星）
+- **🍽️ Recipe (菜譜節點)**: 核心實體，包含菜譜的完整資訊
+- **🥬 Ingredient (食材節點)**: 製作菜譜所需的食材資訊
+- **👨‍🍳 CookingStep (烹飪步驟節點)**: 詳細的製作步驟和方法
+- **📂 RecipeCategory (菜譜分類節點)**: 菜品分類（素菜、葷菜、水產等）
+- **⭐ DifficultyLevel (難度等級節點)**: 製作難度分級（一星到五星）
 
-### 2.3 实际关系模型
+### 2.3 實際關係模型
 
-基于实际数据的关系结构：
+基於實際資料的關係結構：
 
 ```mermaid
 graph LR
-    %% 定义节点样式
+    %% 定義節點樣式
     classDef recipeNode fill:#e1f5fe,stroke:#01579b,stroke-width:3px
     classDef ingredientNode fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef stepNode fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
@@ -112,31 +112,31 @@ graph LR
     classDef methodNode fill:#e3f2fd,stroke:#0277bd,stroke-width:2px
     classDef toolNode fill:#f1f8e9,stroke:#33691e,stroke-width:2px
 
-    %% 核心节点
-    Recipe["🍽️ Recipe<br/>菜谱"]
+    %% 核心節點
+    Recipe["🍽️ Recipe<br/>菜譜"]
     Ingredient["🥬 Ingredient<br/>食材"]
-    CookingStep["👨‍🍳 CookingStep<br/>烹饪步骤"]
-    RecipeCategory["📂 RecipeCategory<br/>菜谱分类"]
-    DifficultyLevel["⭐ DifficultyLevel<br/>难度等级"]
+    CookingStep["👨‍🍳 CookingStep<br/>烹飪步驟"]
+    RecipeCategory["📂 RecipeCategory<br/>菜譜分類"]
+    DifficultyLevel["⭐ DifficultyLevel<br/>難度等級"]
 
-    %% 层次化节点
-    Root["🌳 Root<br/>根节点"]
-    CookingMethod["🔥 CookingMethod<br/>烹饪方法"]
-    CookingTool["🔧 CookingTool<br/>烹饪工具"]
+    %% 層次化節點
+    Root["🌳 Root<br/>根節點"]
+    CookingMethod["🔥 CookingMethod<br/>烹飪方法"]
+    CookingTool["🔧 CookingTool<br/>烹飪工具"]
 
-    %% 主要关系 - 带属性标注
-    Recipe -.->|"REQUIRES<br/>relationshipId: String<br/>amount: String<br/>unit: String<br/><br/>示例: 300g, 2个"| Ingredient
+    %% 主要關係 - 帶屬性標註
+    Recipe -.->|"REQUIRES<br/>relationshipId: String<br/>amount: String<br/>unit: String<br/><br/>示例: 300g, 2個"| Ingredient
     Recipe -.->|"CONTAINS_STEP<br/>relationshipId: String<br/>step_order: Float<br/><br/>示例: 1.0, 2.0"| CookingStep
-    Recipe -->|"BELONGS_TO_CATEGORY<br/>菜谱分类关系"| RecipeCategory
-    Recipe -->|"HAS_DIFFICULTY_LEVEL<br/>难度等级关系"| DifficultyLevel
+    Recipe -->|"BELONGS_TO_CATEGORY<br/>菜譜分類關係"| RecipeCategory
+    Recipe -->|"HAS_DIFFICULTY_LEVEL<br/>難度等級關係"| DifficultyLevel
 
-    %% 层次化关系
-    Root -->|"IS_A<br/>概念层次"| Recipe
-    Root -->|"IS_A<br/>概念层次"| Ingredient
-    Root -->|"IS_A<br/>概念层次"| CookingMethod
-    Root -->|"IS_A<br/>概念层次"| CookingTool
+    %% 層次化關係
+    Root -->|"IS_A<br/>概念層次"| Recipe
+    Root -->|"IS_A<br/>概念層次"| Ingredient
+    Root -->|"IS_A<br/>概念層次"| CookingMethod
+    Root -->|"IS_A<br/>概念層次"| CookingTool
 
-    %% 应用样式
+    %% 應用樣式
     class Recipe recipeNode
     class Ingredient ingredientNode
     class CookingStep stepNode
@@ -147,34 +147,34 @@ graph LR
     class CookingTool toolNode
 ```
 
-**关系类型说明**：
+**關係型別說明**：
 
-| 关系编码 | 关系类型 | 说明 | 属性 |
+| 關係編碼 | 關係型別 | 說明 | 屬性 |
 |---------|---------|------|------|
-| **801000001** | REQUIRES | 菜谱-食材关系 | relationshipId, amount, unit |
-| **801000003** | CONTAINS_STEP | 菜谱-步骤关系 | relationshipId, step_order |
-| **801000004** | HAS_DIFFICULTY_LEVEL | 菜谱-难度关系 | relationshipId |
-| **801000005** | BELONGS_TO_CATEGORY | 菜谱-分类关系 | relationshipId |
+| **801000001** | REQUIRES | 菜譜-食材關係 | relationshipId, amount, unit |
+| **801000003** | CONTAINS_STEP | 菜譜-步驟關係 | relationshipId, step_order |
+| **801000004** | HAS_DIFFICULTY_LEVEL | 菜譜-難度關係 | relationshipId |
+| **801000005** | BELONGS_TO_CATEGORY | 菜譜-分類關係 | relationshipId |
 
-**关系特点**：
-- **虚线箭头**：表示带有丰富属性的关系（如REQUIRES、CONTAINS_STEP）
-- **实线箭头**：表示简单的分类关系
-- **层次化结构**：Root节点作为概念层次的顶层节点
+**關係特點**：
+- **虛線箭頭**：表示帶有豐富屬性的關係（如REQUIRES、CONTAINS_STEP）
+- **實線箭頭**：表示簡單的分類關係
+- **層次化結構**：Root節點作為概念層次的頂層節點
 
-## 三、Neo4j数据导入
+## 三、Neo4j資料匯入
 
-### 3.1 数据准备脚本
+### 3.1 資料準備指令碼
 
-系统通过 `GraphDataPreparationModule` 来处理图数据的加载和管理：
+系統透過 `GraphDataPreparationModule` 來處理圖資料的載入和管理：
 
 ```python
 class GraphDataPreparationModule:
     def __init__(self, neo4j_config: dict):
         """
-        初始化图数据准备模块
+        初始化圖資料準備模組
         
         Args:
-            neo4j_config: Neo4j连接配置
+            neo4j_config: Neo4j連線配置
         """
         self.driver = GraphDatabase.driver(
             neo4j_config['uri'],
@@ -183,10 +183,10 @@ class GraphDataPreparationModule:
         
     def load_graph_data(self) -> List[Dict]:
         """
-        从Neo4j加载图数据
+        從Neo4j載入圖資料
         
         Returns:
-            包含菜谱信息的字典列表
+            包含菜譜資訊的字典列表
         """
         query = """
         MATCH (r:Recipe)
@@ -204,113 +204,113 @@ class GraphDataPreparationModule:
             return [record for record in result]
 ```
 
-### 3.2 实际CSV数据格式
+### 3.2 實際CSV資料格式
 
-转换后的CSV文件格式（基于实际数据）：
+轉換後的CSV檔案格式（基於實際資料）：
 
-**nodes.csv结构**：
+**nodes.csv結構**：
 ```csv
 nodeId,labels,name,preferredTerm,fsn,conceptType,synonyms,category,difficulty,cuisineType,prepTime,cookTime,servings,tags,filePath,amount,unit,isMain,description,stepNumber,methods,tools,timeEstimate
 ```
 
-**实际数据示例**：
+**實際資料示例**：
 ```csv
-201000184,Recipe,干煎阿根廷红虾,干煎阿根廷红虾,,Recipe,"[{'term': '干pan-fried阿根廷红虾', 'language': 'zh'}]",水产,3.0,,提前1天冷藏解冻+10分钟,约5分钟,1人,"趁热吃,柠檬可增酸提味",dishes\aquatic\干煎阿根廷红虾\干煎阿根廷红虾.md,,,,,,,,
-201000185,Ingredient,阿根廷红虾,阿根廷红虾,,Ingredient,,蛋白质,,,,,,,,2-3,只,True,,,,,
-201000196,CookingStep,步骤1,步骤1,,CookingStep,,,,,,,,,,,,,阿根廷红虾提前1天从速冻取出放到冷藏里自然解冻,1.0,解冻,冰箱,24小时
+201000184,Recipe,幹煎阿根廷紅蝦,幹煎阿根廷紅蝦,,Recipe,"[{'term': '幹pan-fried阿根廷紅蝦', 'language': 'zh'}]",水產,3.0,,提前1天冷藏解凍+10分鐘,約5分鐘,1人,"趁熱吃,檸檬可增酸提味",dishes\aquatic\幹煎阿根廷紅蝦\幹煎阿根廷紅蝦.md,,,,,,,,
+201000185,Ingredient,阿根廷紅蝦,阿根廷紅蝦,,Ingredient,,蛋白質,,,,,,,,2-3,只,True,,,,,
+201000196,CookingStep,步驟1,步驟1,,CookingStep,,,,,,,,,,,,,阿根廷紅蝦提前1天從速凍取出放到冷藏裡自然解凍,1.0,解凍,冰箱,24小時
 ```
 
-**relationships.csv结构**：
+**relationships.csv結構**：
 ```csv
 startNodeId,endNodeId,relationshipType,relationshipId,amount,unit,step_order
 ```
 
-**实际关系示例**：
+**實際關係示例**：
 ```csv
 201000184,201000185,801000001,R_000001,2-3,只,
 201000184,201000196,801000003,R_000010,,,1.0
 201000184,720000000,801000002,R_000020,,,
 ```
 
-## 四、图数据查询与检索
+## 四、圖資料查詢與檢索
 
-### 4.1 基础查询模式
+### 4.1 基礎查詢模式
 
-#### 简单实体查询
+#### 簡單實體查詢
 ```cypher
-// 查找所有水产类菜谱
+// 查詢所有水產類菜譜
 MATCH (r:Recipe)
-WHERE r.category = "水产"
+WHERE r.category = "水產"
 RETURN r.name, r.difficulty, r.prepTime, r.cookTime
 
-// 查找包含特定食材的菜谱
+// 查詢包含特定食材的菜譜
 MATCH (r:Recipe)-[:REQUIRES]->(i:Ingredient)
-WHERE i.name CONTAINS "虾"
+WHERE i.name CONTAINS "蝦"
 RETURN r.name, r.difficulty, i.name, i.amount, i.unit
 
-// 使用全文搜索查找菜谱
+// 使用全文搜尋查詢菜譜
 CALL db.index.fulltext.queryNodes("recipe_fulltext_index", "川菜 OR 辣椒")
 YIELD node, score
 RETURN node.name, node.category, score
 ORDER BY score DESC
 ```
 
-#### 多跳关系查询
+#### 多跳關係查詢
 ```cypher
-// 查找某个难度等级的所有菜谱（基于属性查询）
+// 查詢某個難度等級的所有菜譜（基於屬性查詢）
 MATCH (r:Recipe)
 WHERE r.difficulty = 3.0
 RETURN r.name, r.category, r.prepTime, r.cookTime, r.difficulty
 
-// 查找菜谱的完整制作流程
-MATCH (r:Recipe {name: "干煎阿根廷红虾"})-[:CONTAINS_STEP]->(s:CookingStep)
+// 查詢菜譜的完整製作流程
+MATCH (r:Recipe {name: "幹煎阿根廷紅蝦"})-[:CONTAINS_STEP]->(s:CookingStep)
 RETURN r.name, s.stepNumber, s.description, s.methods, s.tools
 ORDER BY s.stepNumber
 ```
 
-### 4.2 复杂推理查询
+### 4.2 複雜推理查詢
 
-#### 基于约束的菜谱推荐
+#### 基於約束的菜譜推薦
 ```cypher
-// 查找适合新手的简单菜谱（低难度、步骤少）
+// 查詢適合新手的簡單菜譜（低難度、步驟少）
 MATCH (r:Recipe)
 WHERE r.difficulty <= 2.0
   AND r.stepCount <= 5
 RETURN r.name, r.difficulty, r.stepCount, r.category
 ORDER BY r.difficulty, r.stepCount
 
-// 查找制作时间短的菜谱
+// 查詢製作時間短的菜譜
 MATCH (r:Recipe)
 WHERE r.prepTime IS NOT NULL AND r.cookTime IS NOT NULL
-  AND r.prepTime CONTAINS "分钟" AND r.cookTime CONTAINS "分钟"
+  AND r.prepTime CONTAINS "分鐘" AND r.cookTime CONTAINS "分鐘"
 RETURN r.name, r.prepTime, r.cookTime, r.category
 ORDER BY r.name
 ```
 
-#### 菜谱组合推荐
+#### 菜譜組合推薦
 ```cypher
-// 查找同一分类下的不同菜谱
+// 查詢同一分類下的不同菜譜
 MATCH (r1:Recipe), (r2:Recipe)
 WHERE r1.category = r2.category
-  AND r1.category = "水产"
+  AND r1.category = "水產"
   AND r1.nodeId <> r2.nodeId
 RETURN r1.name, r2.name, r1.category
 LIMIT 5
 
-// 查找包含相同食材的不同菜谱
+// 查詢包含相同食材的不同菜譜
 MATCH (r1:Recipe)-[:REQUIRES]->(i:Ingredient)<-[:REQUIRES]-(r2:Recipe)
 WHERE r1.nodeId <> r2.nodeId
-  AND i.name = "阿根廷红虾"
+  AND i.name = "阿根廷紅蝦"
 RETURN r1.name, r2.name, i.name
 ```
 
-## 五、图数据到文档的转换
+## 五、圖資料到文件的轉換
 
-### 5.1 结构化文档构建
+### 5.1 結構化文件構建
 
 ```python
 def build_recipe_documents(self, graph_data: List[Dict]) -> List[Document]:
-    """将图数据转换为结构化文档"""
+    """將圖資料轉換為結構化文件"""
 
     documents = []
     for record in graph_data:
@@ -319,23 +319,23 @@ def build_recipe_documents(self, graph_data: List[Dict]) -> List[Document]:
         steps = record['steps']
         categories = record['categories']
 
-        # 构建结构化文档内容
+        # 構建結構化文件內容
         content_parts = [
             f"# {recipe['name']}",
-            f"分类: {', '.join([c['name'] for c in categories])}",
-            f"难度: {recipe['difficulty']}星",
-            # ... 时间、份量等基本信息
+            f"分類: {', '.join([c['name'] for c in categories])}",
+            f"難度: {recipe['difficulty']}星",
+            # ... 時間、份量等基本資訊
             "",
             "## 所需食材"
         ]
 
-        # 添加食材列表
+        # 新增食材列表
         for i, ingredient in enumerate(ingredients, 1):
             content_parts.append(f"{i}. {ingredient['name']}")
 
-        content_parts.extend(["", "## 制作步骤"])
+        content_parts.extend(["", "## 製作步驟"])
 
-        # 添加制作步骤（按顺序排序）
+        # 新增製作步驟（按順序排序）
         sorted_steps = sorted(steps, key=lambda x: x.get('order', 0))
         for step in sorted_steps:
             content_parts.extend([
@@ -344,16 +344,16 @@ def build_recipe_documents(self, graph_data: List[Dict]) -> List[Document]:
                 ""
             ])
 
-        # 创建Document对象
+        # 建立Document物件
         document = Document(
             page_content="\n".join(content_parts),
             metadata={
                 'recipe_name': recipe['name'],
-                'node_id': recipe.get('nodeId'),  # 关键：保持与图节点的关联
+                'node_id': recipe.get('nodeId'),  # 關鍵：保持與圖節點的關聯
                 'difficulty': recipe.get('difficulty', 0),
                 'categories': [c['name'] for c in categories],
                 'ingredients': [i['name'] for i in ingredients]
-                # ... 其他元数据
+                # ... 其他後設資料
             }
         )
         documents.append(document)
@@ -361,85 +361,85 @@ def build_recipe_documents(self, graph_data: List[Dict]) -> List[Document]:
     return documents
 ```
 
-> **为什么不直接读取原始Markdown文件？**
+> **為什麼不直接讀取原始Markdown檔案？**
 >
-> 虽然第八章中HowToCook项目的Markdown格式是统一的，但图RAG的价值在于提供更丰富的信息：
+> 雖然第八章中HowToCook專案的Markdown格式是統一的，但圖RAG的價值在於提供更豐富的資訊：
 >
-> **原始Markdown的特点**：
-> - **格式统一**：HowToCook项目有良好的Markdown结构（`#`、`##`、`###`层级）
-> - **信息完整**：包含菜品名称、原料、制作步骤等基本信息
-> - **元数据推断**：可以从文件路径推断分类，从`★★★★★`符号推断难度
+> **原始Markdown的特點**：
+> - **格式統一**：HowToCook專案有良好的Markdown結構（`#`、`##`、`###`層級）
+> - **資訊完整**：包含菜品名稱、原料、製作步驟等基本資訊
+> - **後設資料推斷**：可以從檔案路徑推斷分類，從`★★★★★`符號推斷難度
 >
-> **图数据构建文档的额外价值**：
-> 1. **关系信息丰富**：包含食材间的替代关系、菜谱间的相似性等图关系
-> 2. **结构化查询**：可以通过图关系快速获取相关信息（如"包含鸡肉的所有菜谱"）
-> 3. **动态内容生成**：根据图关系动态生成推荐内容（如"相似菜谱"、"替代食材"）
-> 4. **语义增强**：图数据库可以存储更丰富的语义信息和计算结果
-> 5. **查询优化**：图查询在复杂关系检索上比文本搜索更高效
+> **圖資料構建文件的額外價值**：
+> 1. **關係資訊豐富**：包含食材間的替代關係、菜譜間的相似性等圖關係
+> 2. **結構化查詢**：可以透過圖關係快速獲取相關資訊（如"包含雞肉的所有菜譜"）
+> 3. **動態內容生成**：根據圖關係動態生成推薦內容（如"相似菜譜"、"替代食材"）
+> 4. **語義增強**：圖資料庫可以儲存更豐富的語義資訊和計算結果
+> 5. **查詢最佳化**：圖查詢在複雜關係檢索上比文字搜尋更高效
 
-### 5.2 图RAG中的分块策略
+### 5.2 圖RAG中的分塊策略
 
-在图RAG系统中，分块策略与上个项目有所不同，主要体现在**数据来源和上下文获取方式**的差异：
+在圖RAG系統中，分塊策略與上個專案有所不同，主要體現在**資料來源和上下文獲取方式**的差異：
 
-**图RAG vs 传统RAG的分块对比**：
+**圖RAG vs 傳統RAG的分塊對比**：
 
-| 特性 | 第八章 传统RAG | 第九章 图RAG |
+| 特性 | 第八章 傳統RAG | 第九章 圖RAG |
 |------|-----------------|----------------|
-| **数据来源** | 直接读取Markdown文件 | 从图数据库构建文档 |
-| **上下文获取** | 父子文档映射 | 图关系遍历 |
-| **关系信息** | 有限（仅父子关系） | 丰富（多种图关系） |
-| **分块策略** | 按Markdown标题分块 | 按语义+长度智能分块 |
-| **元数据来源** | 文件路径+内容推断 | 图节点结构化数据 |
+| **資料來源** | 直接讀取Markdown檔案 | 從圖資料庫構建文件 |
+| **上下文獲取** | 父子文件對映 | 圖關係遍歷 |
+| **關係資訊** | 有限（僅父子關係） | 豐富（多種圖關係） |
+| **分塊策略** | 按Markdown標題分塊 | 按語義+長度智慧分塊 |
+| **後設資料來源** | 檔案路徑+內容推斷 | 圖節點結構化資料 |
 
-**图RAG分块的特点**：
-1. **保持图关联**：每个chunk通过`parent_id`与图节点关联
-2. **语义优先分块**：优先按章节分块，保持语义完整性
-3. **丰富的元数据**：直接从图节点获取结构化信息
-4. **双重上下文**：既有文本块关系，又有图关系信息
+**圖RAG分塊的特點**：
+1. **保持圖關聯**：每個chunk透過`parent_id`與圖節點關聯
+2. **語義優先分塊**：優先按章節分塊，保持語義完整性
+3. **豐富的後設資料**：直接從圖節點獲取結構化資訊
+4. **雙重上下文**：既有文字塊關係，又有圖關係資訊
 
-### 5.3 实际分块实现
+### 5.3 實際分塊實現
 
-在图RAG系统中，采用的实际分块策略：
+在圖RAG系統中，採用的實際分塊策略：
 
 ```python
 def chunk_documents(self, chunk_size: int = 500, chunk_overlap: int = 50) -> List[Document]:
-    """图RAG文档分块：结合图结构优势的智能分块策略"""
+    """圖RAG文件分塊：結合圖結構優勢的智慧分塊策略"""
 
     chunks = []
     for doc in self.documents:
         content = doc.page_content
 
         if len(content) <= chunk_size:
-            # 短文档：保持完整，避免破坏语义
+            # 短文件：保持完整，避免破壞語義
             chunk = Document(
                 page_content=content,
                 metadata={
                     **doc.metadata,
-                    "parent_id": doc.metadata["node_id"],  # 关键：保持与图节点的关联
+                    "parent_id": doc.metadata["node_id"],  # 關鍵：保持與圖節點的關聯
                     "chunk_index": 0,
                     "doc_type": "chunk"
                 }
             )
             chunks.append(chunk)
         else:
-            # 长文档：智能分块策略
+            # 長文件：智慧分塊策略
             sections = content.split('\n## ')
 
             if len(sections) <= 1:
-                # 无章节结构：按长度分块（带重叠）
+                # 無章節結構：按長度分塊（帶重疊）
                 total_chunks = (len(content) - 1) // (chunk_size - chunk_overlap) + 1
                 for i in range(total_chunks):
                     start = i * (chunk_size - chunk_overlap)
                     end = min(start + chunk_size, len(content))
-                    # ... 创建chunk，保持parent_id关联
+                    # ... 建立chunk，保持parent_id關聯
             else:
-                # 有章节结构：按语义分块（推荐）
+                # 有章節結構：按語義分塊（推薦）
                 for i, section in enumerate(sections):
                     chunk_content = section if i == 0 else f"## {section}"
-                    # ... 创建chunk，包含section_title信息
+                    # ... 建立chunk，包含section_title資訊
 
     return chunks
 ```
 
-图RAG的分块策略在保持语义完整性的基础上，充分利用图数据库的结构化优势。与第八章直接读取Markdown文件不同，这里从图数据库构建标准化文档，每个chunk通过`parent_id`与原始Recipe节点保持关联，既继承了传统的父子文档映射关系，又能通过图关系遍历获取更丰富的上下文信息。在具体实现上，采用智能分块策略：短文档保持完整避免破坏语义，长文档优先按`##`标题进行章节分块，必要时才进行长度分块，同时为每个chunk提供丰富的元数据（如chunk_id、chunk_index、total_chunks等），确保后续处理的灵活性和可追溯性。
+圖RAG的分塊策略在保持語義完整性的基礎上，充分利用圖資料庫的結構化優勢。與第八章直接讀取Markdown檔案不同，這裡從圖資料庫構建標準化文件，每個chunk透過`parent_id`與原始Recipe節點保持關聯，既繼承了傳統的父子文件對映關係，又能透過圖關係遍歷獲取更豐富的上下文資訊。在具體實現上，採用智慧分塊策略：短文件保持完整避免破壞語義，長文件優先按`##`標題進行章節分塊，必要時才進行長度分塊，同時為每個chunk提供豐富的後設資料（如chunk_id、chunk_index、total_chunks等），確保後續處理的靈活性和可追溯性。
 

@@ -3,15 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>All-in-RAG | 大模型应用开发实战：RAG技术全栈指南</title>
+    <title>All-in-RAG | 大模型應用開發實戰：RAG技術全棧指南</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="面向大模型应用开发者的RAG（检索增强生成）技术全栈教程，从零开始掌握RAG技术的核心原理与实际应用">
+    <meta name="description" content="面向大模型應用開發者的RAG（檢索增強生成）技術全棧教程，從零開始掌握RAG技術的核心原理與實際應用">
     <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@latest/lib/themes/vue.css">
     <style>
-        /* --- 1. 原有样式保持 --- */
-        /* 脚注样式 */
+        /* --- 1. 原有樣式保持 --- */
+        /* 腳註樣式 */
         .footnote {
             margin-top: 20px;
             padding: 10px;
@@ -39,7 +39,7 @@
         .footnote a:hover {
             text-decoration: underline;
         }
-        /* Mermaid图表样式 */
+        /* Mermaid圖表樣式 */
         .mermaid {
             text-align: center;
             margin: 20px 0;
@@ -48,7 +48,7 @@
             max-width: 100%;
             height: auto;
         }
-        /* Logo样式 */
+        /* Logo樣式 */
         .app-name-link {
             display: flex !important;
             align-items: center;
@@ -69,16 +69,16 @@
             justify-content: center;
             width: 100%;
         }
-        /* 隐藏文字，只显示logo */
+        /* 隱藏文字，只顯示logo */
         .app-name-link .app-name-text {
             display: none;
         }
-        /* 调整侧边栏logo区域 */
+        /* 調整側邊欄logo區域 */
         .sidebar .app-name {
             text-align: center;
             padding: 15px 0;
         }
-        /* 语言切换器样式 */
+        /* 語言切換器樣式 */
         .app-nav {
             position: fixed;
             right: 20px;
@@ -112,7 +112,7 @@
             box-shadow: 0 0 0 2px rgba(66, 184, 131, 0.2);
         }
         
-        /* 修复表格渲染问题 */
+        /* 修復表格渲染問題 */
         .markdown-section table {
             display: table;
             width: auto;
@@ -120,26 +120,26 @@
             table-layout: auto;
         }
 
-        /* --- 2. 新增：暗黑模式核心样式 --- */
+        /* --- 2. 新增：暗黑模式核心樣式 --- */
         :root {
             --dark-bg: #1a1a1a;
             --dark-sidebar: #141414;
             --dark-border: #333;
             --theme-color: #42b883;
             
-            /* 字体颜色优化：使用更高亮度的灰白色，提高对比度 */
+            /* 字型顏色最佳化：使用更高亮度的灰白色，提高對比度 */
             --dark-text: #e6e6e6; 
             --dark-code-text: #f8f8f2;
             --dark-code-bg: #2b2b2b;
         }
 
-        /* 基础反色 */
+        /* 基礎反色 */
         body.dark-mode {
             background-color: var(--dark-bg);
             color: var(--dark-text);
         }
 
-        /* 侧边栏适配 */
+        /* 側邊欄適配 */
         body.dark-mode .sidebar {
             background-color: var(--dark-sidebar);
             border-right: 1px solid var(--dark-border);
@@ -153,7 +153,7 @@
             border-right: 2px solid var(--theme-color);
         }
 
-        /* 代码块适配 - 增强对比度 */
+        /* 程式碼塊適配 - 增強對比度 */
         body.dark-mode pre {
             background-color: var(--dark-code-bg) !important;
         }
@@ -161,15 +161,15 @@
             background-color: var(--dark-code-bg) !important;
             color: var(--dark-code-text) !important;
         }
-        /* 行内代码 */
+        /* 行內程式碼 */
         body.dark-mode .markdown-section code {
             color: #f08d49;
             background-color: rgba(255,255,255,0.1);
         }
 
-        /* 标题适配 */
+        /* 標題適配 */
         body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4 {
-            color: #ffffff; /* 标题纯白 */
+            color: #ffffff; /* 標題純白 */
         }
         body.dark-mode blockquote {
             color: #b0b0b0;
@@ -177,7 +177,7 @@
             border-left-color: var(--theme-color);
         }
 
-        /* 表格适配 */
+        /* 表格適配 */
         body.dark-mode .markdown-section tr:nth-child(2n) {
             background-color: rgba(255,255,255,0.03);
         }
@@ -187,9 +187,9 @@
             background-color: transparent;
         }
 
-        /* --- 特殊组件适配 --- */
+        /* --- 特殊元件適配 --- */
 
-        /* 1. 适配你的脚注 (footnote) */
+        /* 1. 適配你的腳註 (footnote) */
         body.dark-mode .footnote {
             background-color: rgba(255,255,255,0.05); /* 深色背景 */
             color: #cccccc;
@@ -199,19 +199,19 @@
             color: var(--theme-color);
         }
 
-        /* 2. 适配语言选择下拉框 */
+        /* 2. 適配語言選擇下拉框 */
         body.dark-mode #lang-selector {
             background-color: #333 !important;
             color: #fff !important;
             border-color: #555 !important;
         }
 
-        /* 3. Mermaid 图表反色 */
+        /* 3. Mermaid 圖表反色 */
         body.dark-mode .mermaid {
             filter: invert(1) hue-rotate(180deg);
         }
 
-        /* --- 3. 侧边栏开关按钮样式 --- */
+        /* --- 3. 側邊欄開關按鈕樣式 --- */
         .sidebar-toggle-btn {
             cursor: pointer;
             display: block;
@@ -259,22 +259,22 @@
                 paths: 'auto',
                 placeholder: {
                     '/en/': '🔍 Search',
-                    '/': '🔍 搜索'
+                    '/': '🔍 搜尋'
                 },
                 noData: {
                     '/en/': '😞 No Results',
-                    '/': '😞 找不到结果'
+                    '/': '😞 找不到結果'
                 },
                 depth: 6
             },
             pagination: {
                 previousText: {
                     '/en/': 'Previous',
-                    '/': '上一章节'
+                    '/': '上一章節'
                 },
                 nextText: {
                     '/en/': 'Next',
-                    '/': '下一章节'
+                    '/': '下一章節'
                 }
             },
             count: {
@@ -285,17 +285,17 @@
             },
 
             plugins: [
-                // --- 新增：暗黑模式开关插件 ---
+                // --- 新增：暗黑模式開關外掛 ---
                 function(hook, vm) {
                     hook.doneEach(function() {
                         const sidebar = document.querySelector('.sidebar-nav');
-                        // 防止重复添加
+                        // 防止重複新增
                         if (!sidebar || document.querySelector('.sidebar-toggle-btn')) return;
 
                         const btn = document.createElement('div');
                         btn.className = 'sidebar-toggle-btn';
                         
-                        // 初始化状态
+                        // 初始化狀態
                         const savedTheme = localStorage.getItem('theme-mode');
                         if (savedTheme === 'dark') {
                             document.body.classList.add('dark-mode');
@@ -304,7 +304,7 @@
                             btn.textContent = '☀️ Switch to Dark';
                         }
 
-                        // 点击事件
+                        // 點選事件
                         btn.onclick = function() {
                             document.body.classList.toggle('dark-mode');
                             const isDark = document.body.classList.contains('dark-mode');
@@ -312,12 +312,12 @@
                             btn.textContent = isDark ? '🌙 Switch to Light' : '☀️ Switch to Dark';
                         };
 
-                        // 插入到侧边栏最顶部
+                        // 插入到側邊欄最頂部
                         sidebar.insertBefore(btn, sidebar.firstChild);
                     });
                 },
 
-                // --- 原有插件：脚注处理 ---
+                // --- 原有外掛：腳註處理 ---
                 function(hook, vm) {
                     hook.beforeEach(function (html) {
                         html = html.replace(/\[\^([^\]]+)\](?!:)/g, '<sup class="footnote-ref"><a href="#fn-$1" data-footnote-ref="$1" id="fnref-$1">$1</a></sup>');
@@ -364,7 +364,7 @@
                         } catch (e) {}
                     });
                 },
-                // --- 原有插件：语言切换插件 ---
+                // --- 原有外掛：語言切換外掛 ---
                 function(hook, vm) {
                     hook.mounted(function() {
                         var nav = document.querySelector('.app-nav');
@@ -420,7 +420,7 @@
                         window.addEventListener('hashchange', updateSelector);
                     });
                 },
-                // --- 原有插件：图片相对路径修复 ---
+                // --- 原有外掛：圖片相對路徑修復 ---
                 function(hook, vm) {
                     function getRouteDir() {
                         var hash = decodeURIComponent(window.location.hash || '');
@@ -455,9 +455,9 @@
     </script>
     <!-- Put them above docsify.min.js -->
     <script src="//cdn.jsdelivr.net/npm/docsify@latest/lib/docsify.min.js"></script>
-    <!-- 搜索功能 -->
+    <!-- 搜尋功能 -->
     <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-    <!-- 新增：图片放大插件 (官方插件，稳定支持动态路由) -->
+    <!-- 新增：圖片放大外掛 (官方外掛，穩定支援動態路由) -->
     <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
 
     <!-- code render-->
@@ -471,7 +471,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@3"></script>
     <!-- CDN files for docsify-katex -->
     <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
-    <!-- 字数统计 -->
+    <!-- 字數統計 -->
     <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
     <!-- Mermaid -->
     <script src="//cdn.jsdelivr.net/npm/mermaid@latest/dist/mermaid.min.js"></script>

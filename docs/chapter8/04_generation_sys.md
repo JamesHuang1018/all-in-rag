@@ -1,77 +1,77 @@
-# 第四节 生成集成与系统整合
+# 第四節 生成整合與系統整合
 
-Boss要打完喽！在最后一节来学习一下如何实现智能的生成集成模块，以及将所有模块整合成一个完整的RAG系统。
+Boss要打完嘍！在最後一節來學習一下如何實現智慧的生成整合模組，以及將所有模組整合成一個完整的RAG系統。
 
 ```mermaid
 flowchart LR
-    %% 生成集成与系统整合流程
-    INPUT[📖 检索结果] --> ROUTE{🎯 查询路由}
+    %% 生成整合與系統整合流程
+    INPUT[📖 檢索結果] --> ROUTE{🎯 查詢路由}
     
-    %% 查询路由分支
-    ROUTE -->|list| LIST_QUERY[📋 列表查询]
-    ROUTE -->|detail| DETAIL_QUERY[📖 详细查询]
-    ROUTE -->|general| GENERAL_QUERY[ℹ️ 一般查询]
+    %% 查詢路由分支
+    ROUTE -->|list| LIST_QUERY[📋 列表查詢]
+    ROUTE -->|detail| DETAIL_QUERY[📖 詳細查詢]
+    ROUTE -->|general| GENERAL_QUERY[ℹ️ 一般查詢]
     
-    %% 查询重写处理
-    LIST_QUERY --> KEEP[📝 保持原查询]
+    %% 查詢重寫處理
+    LIST_QUERY --> KEEP[📝 保持原查詢]
     DETAIL_QUERY --> KEEP
-    GENERAL_QUERY --> REWRITE[🔄 查询重写]
+    GENERAL_QUERY --> REWRITE[🔄 查詢重寫]
     
-    %% 父子文档处理
-    KEEP --> PARENT[📚 获取父文档]
+    %% 父子文件處理
+    KEEP --> PARENT[📚 獲取父文件]
     REWRITE --> PARENT
-    PARENT --> DEDUP[🧠 智能去重排序]
+    PARENT --> DEDUP[🧠 智慧去重排序]
     
     %% 生成模式路由
     DEDUP --> GEN_ROUTE{🎨 生成模式路由}
     GEN_ROUTE -->|list| LIST_GEN[📋 列表生成模式]
-    GEN_ROUTE -->|detail| DETAIL_GEN[📝 分步指导模式]
-    GEN_ROUTE -->|general| BASIC_GEN[💬 基础回答模式]
+    GEN_ROUTE -->|detail| DETAIL_GEN[📝 分步指導模式]
+    GEN_ROUTE -->|general| BASIC_GEN[💬 基礎回答模式]
     
-    %% 最终输出
-    LIST_GEN --> OUTPUT[✨ 返回结果]
+    %% 最終輸出
+    LIST_GEN --> OUTPUT[✨ 返回結果]
     DETAIL_GEN --> OUTPUT
     BASIC_GEN --> OUTPUT
     
-    %% 查询路由详细流程
-    subgraph RouteProcess [查询路由过程]
-        R1[🔍 分析查询类型]
-        R2[📊 判断用户意图]
-        R3[🎯 选择处理策略]
+    %% 查詢路由詳細流程
+    subgraph RouteProcess [查詢路由過程]
+        R1[🔍 分析查詢型別]
+        R2[📊 判斷使用者意圖]
+        R3[🎯 選擇處理策略]
         R1 --> R2 --> R3
     end
     
-    %% 查询重写详细流程
-    subgraph RewriteProcess [查询重写过程]
-        W1[📝 分析查询模糊度]
-        W2[🔧 优化查询表达]
-        W3[✅ 输出重写结果]
+    %% 查詢重寫詳細流程
+    subgraph RewriteProcess [查詢重寫過程]
+        W1[📝 分析查詢模糊度]
+        W2[🔧 最佳化查詢表達]
+        W3[✅ 輸出重寫結果]
         W1 --> W2 --> W3
     end
     
-    %% 生成模式详细流程
-    subgraph GenerationProcess [多模式生成过程]
-        G1[📋 简洁列表输出]
-        G2[📝 结构化详细指导]
-        G3[💬 基础信息回答]
+    %% 生成模式詳細流程
+    subgraph GenerationProcess [多模式生成過程]
+        G1[📋 簡潔列表輸出]
+        G2[📝 結構化詳細指導]
+        G3[💬 基礎資訊回答]
         G1 --> G2 --> G3
     end
     
-    %% 系统整合流程
-    subgraph SystemProcess [系统整合过程]
-        SYS1[🔧 模块初始化]
-        SYS2[📚 知识库构建]
-        SYS3[🔄 交互式问答]
+    %% 系統整合流程
+    subgraph SystemProcess [系統整合過程]
+        SYS1[🔧 模組初始化]
+        SYS2[📚 知識庫構建]
+        SYS3[🔄 互動式問答]
         SYS1 --> SYS2 --> SYS3
     end
     
-    %% 连接子流程
+    %% 連線子流程
     ROUTE -.-> RouteProcess
     REWRITE -.-> RewriteProcess
     GEN_ROUTE -.-> GenerationProcess
     OUTPUT -.-> SystemProcess
     
-    %% 样式定义
+    %% 樣式定義
     classDef routing fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     classDef rewrite fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
     classDef generation fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -79,7 +79,7 @@ flowchart LR
     classDef subprocess fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     classDef output fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     
-    %% 应用样式
+    %% 應用樣式
     class ROUTE,LIST_QUERY,DETAIL_QUERY,GENERAL_QUERY,GEN_ROUTE routing
     class KEEP,REWRITE rewrite
     class LIST_GEN,DETAIL_GEN,BASIC_GEN generation
@@ -88,30 +88,30 @@ flowchart LR
     class INPUT,OUTPUT output
 ```
 
-## 一、生成集成模块
+## 一、生成整合模組
 
-生成集成模块是整个RAG系统的"大脑"，负责理解用户意图、路由查询类型，并生成高质量的回答。
+生成整合模組是整個RAG系統的"大腦"，負責理解使用者意圖、路由查詢型別，並生成高質量的回答。
 
-> [generation_integration.py完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C8/rag_modules/generation_integration.py)
+> [generation_integration.py完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C8/rag_modules/generation_integration.py)
 
-### 1.1 设计思路
+### 1.1 設計思路
 
-**智能查询路由**：根据用户查询自动判断是列表查询、详细查询还是一般查询，选择最适合的生成策略。
+**智慧查詢路由**：根據使用者查詢自動判斷是列表查詢、詳細查詢還是一般查詢，選擇最適合的生成策略。
 
-**查询重写优化**：对模糊不清的查询进行智能重写，提升检索效果。比如将"做菜"重写为"简单易做的家常菜谱"。
+**查詢重寫最佳化**：對模糊不清的查詢進行智慧重寫，提升檢索效果。比如將"做菜"重寫為"簡單易做的家常菜譜"。
 
 **多模式生成**：
-- **列表模式**：适用于推荐类查询，返回简洁的菜品列表
-- **详细模式**：适用于制作类查询，提供分步骤的详细指导
-- **基础模式**：适用于一般性问题，提供常规回答
+- **列表模式**：適用於推薦類查詢，返回簡潔的菜品列表
+- **詳細模式**：適用於製作類查詢，提供分步驟的詳細指導
+- **基礎模式**：適用於一般性問題，提供常規回答
 
-> 上面说到的两种主要方法可以回顾 [**查询重构与分发**](https://github.com/datawhalechina/all-in-rag/blob/main/docs/chapter4/14_query_rewriting.md)
+> 上面說到的兩種主要方法可以回顧 [**查詢重構與分發**](https://github.com/datawhalechina/all-in-rag/blob/main/docs/chapter4/14_query_rewriting.md)
 
-### 1.2 类结构设计
+### 1.2 類結構設計
 
 ```python
 class GenerationIntegrationModule:
-    """生成集成模块 - 负责LLM集成和回答生成"""
+    """生成整合模組 - 負責LLM整合和回答生成"""
     
     def __init__(self, model_name: str = "kimi-k2-0711-preview", 
                  temperature: float = 0.1, max_tokens: int = 2048):
@@ -122,100 +122,100 @@ class GenerationIntegrationModule:
         self.setup_llm()
 ```
 
-- `temperature`: 生成温度，控制回答的创造性
-- `max_tokens`: 最大生成长度
-- `llm`: Moonshot Chat模型实例
+- `temperature`: 生成溫度，控制回答的創造性
+- `max_tokens`: 最大生成長度
+- `llm`: Moonshot Chat模型例項
 
-### 1.3 查询路由实现
+### 1.3 查詢路由實現
 
 ```python
 def query_router(self, query: str) -> str:
-    """查询路由 - 根据查询类型选择不同的处理方式"""
+    """查詢路由 - 根據查詢型別選擇不同的處理方式"""
     prompt = ChatPromptTemplate.from_template("""
-根据用户的问题，将其分类为以下三种类型之一：
+根據使用者的問題，將其分類為以下三種型別之一：
 
-1. 'list' - 用户想要获取菜品列表或推荐，只需要菜名
-   例如：推荐几个素菜、有什么川菜、给我3个简单的菜
+1. 'list' - 使用者想要獲取菜品列表或推薦，只需要菜名
+   例如：推薦幾個素菜、有什麼川菜、給我3個簡單的菜
 
-2. 'detail' - 用户想要具体的制作方法或详细信息
-   例如：宫保鸡丁怎么做、制作步骤、需要什么食材
+2. 'detail' - 使用者想要具體的製作方法或詳細資訊
+   例如：宮保雞丁怎麼做、製作步驟、需要什麼食材
 
-3. 'general' - 其他一般性问题
-   例如：什么是川菜、制作技巧、营养价值
+3. 'general' - 其他一般性問題
+   例如：什麼是川菜、製作技巧、營養價值
 
-请只返回分类结果：list、detail 或 general
+請只返回分類結果：list、detail 或 general
 
-用户问题: {query}
+使用者問題: {query}
 
-分类结果:""")
+分類結果:""")
     
-    # ... (LCEL链式调用)
+    # ... (LCEL鏈式呼叫)
     return result
 ```
 
-查询路由是整个系统的关键，决定了后续的处理流程。通过LLM自动判断查询意图，比简单的关键词匹配更准确。
+查詢路由是整個系統的關鍵，決定了後續的處理流程。透過LLM自動判斷查詢意圖，比簡單的關鍵詞匹配更準確。
 
-### 1.4 查询重写优化
+### 1.4 查詢重寫最佳化
 
 ```python
 def query_rewrite(self, query: str) -> str:
-    """智能查询重写 - 让大模型判断是否需要重写查询"""
-    # 使用LLM分析查询是否需要重写
-    # 具体明确的查询（如"宫保鸡丁怎么做"）保持原样
-    # 模糊查询（如"做菜"、"推荐个菜"）进行重写优化
+    """智慧查詢重寫 - 讓大模型判斷是否需要重寫查詢"""
+    # 使用LLM分析查詢是否需要重寫
+    # 具體明確的查詢（如"宮保雞丁怎麼做"）保持原樣
+    # 模糊查詢（如"做菜"、"推薦個菜"）進行重寫最佳化
 
-    # ... (提示词设计和LCEL链式调用)
+    # ... (提示詞設計和LCEL鏈式呼叫)
     return response
 ```
 
-查询重写能够将模糊的用户输入转换为更适合检索的查询，显著提升系统的实用性。重写规则包括：保持原意不变、增加相关烹饪术语、优先推荐简单易做的菜品。
+查詢重寫能夠將模糊的使用者輸入轉換為更適合檢索的查詢，顯著提升系統的實用性。重寫規則包括：保持原意不變、增加相關烹飪術語、優先推薦簡單易做的菜品。
 
 ### 1.5 多模式生成
 
 **列表模式生成**：
 ```python
 def generate_list_answer(self, query: str, context_docs: List[Document]) -> str:
-    """生成列表式回答 - 适用于推荐类查询"""
-    # 提取菜品名称
+    """生成列表式回答 - 適用於推薦類查詢"""
+    # 提取菜品名稱
     dish_names = []
     for doc in context_docs:
         dish_name = doc.metadata.get('dish_name', '未知菜品')
         if dish_name not in dish_names:
             dish_names.append(dish_name)
     
-    # 构建简洁的列表回答
+    # 構建簡潔的列表回答
     if len(dish_names) <= 3:
-        return f"为您推荐以下菜品：\n" + "\n".join([f"{i+1}. {name}" for i, name in enumerate(dish_names)])
-    # ... (其他情况处理)
+        return f"為您推薦以下菜品：\n" + "\n".join([f"{i+1}. {name}" for i, name in enumerate(dish_names)])
+    # ... (其他情況處理)
 ```
 
-**详细模式生成**：
+**詳細模式生成**：
 ```python
 def generate_step_by_step_answer(self, query: str, context_docs: List[Document]) -> str:
-    """生成分步骤回答"""
-    # 使用结构化提示词，包含：
-    # - 🥘 菜品介绍
+    """生成分步驟回答"""
+    # 使用結構化提示詞，包含：
+    # - 🥘 菜品介紹
     # - 🛒 所需食材
-    # - 👨‍🍳 制作步骤
-    # - 💡 制作技巧
+    # - 👨‍🍳 製作步驟
+    # - 💡 製作技巧
 
-    # ... (提示词设计和LCEL链式调用)
+    # ... (提示詞設計和LCEL鏈式呼叫)
     return response
 ```
 
-详细模式使用结构化的提示词设计，让LLM能够生成格式规范、内容丰富的分步骤指导，重点突出实用性和可操作性。
+詳細模式使用結構化的提示詞設計，讓LLM能夠生成格式規範、內容豐富的分步驟指導，重點突出實用性和可操作性。
 
-## 二、系统整合
+## 二、系統整合
 
-主程序负责协调各个模块，实现完整的RAG流程：数据准备 → 索引构建 → 检索优化 → 生成集成。同时提供了索引缓存、交互式问答等实用功能。
+主程式負責協調各個模組，實現完整的RAG流程：資料準備 → 索引構建 → 檢索最佳化 → 生成整合。同時提供了索引快取、互動式問答等實用功能。
 
-> [main.py完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C8/main.py)
+> [main.py完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C8/main.py)
 
-### 2.1 主系统类设计
+### 2.1 主系統類設計
 
 ```python
 class RecipeRAGSystem:
-    """食谱RAG系统主类"""
+    """食譜RAG系統主類"""
     
     def __init__(self, config: RAGConfig = None):
         self.config = config or DEFAULT_CONFIG
@@ -224,30 +224,30 @@ class RecipeRAGSystem:
         self.retrieval_module = None
         self.generation_module = None
         
-        # 检查数据路径和API密钥
+        # 檢查資料路徑和API金鑰
         if not Path(self.config.data_path).exists():
-            raise FileNotFoundError(f"数据路径不存在: {self.config.data_path}")
+            raise FileNotFoundError(f"資料路徑不存在: {self.config.data_path}")
         if not os.getenv("MOONSHOT_API_KEY"):
-            raise ValueError("请设置 MOONSHOT_API_KEY 环境变量")
+            raise ValueError("請設定 MOONSHOT_API_KEY 環境變數")
 ```
 
-主系统类负责协调所有模块，确保系统的完整性和一致性。
+主系統類負責協調所有模組，確保系統的完整性和一致性。
 
-### 2.2 系统初始化流程
+### 2.2 系統初始化流程
 
 ```python
 def initialize_system(self):
-    """初始化所有模块"""
-    # 1. 初始化数据准备模块
+    """初始化所有模組"""
+    # 1. 初始化資料準備模組
     self.data_module = DataPreparationModule(self.config.data_path)
     
-    # 2. 初始化索引构建模块
+    # 2. 初始化索引構建模組
     self.index_module = IndexConstructionModule(
         model_name=self.config.embedding_model,
         index_save_path=self.config.index_save_path
     )
     
-    # 3. 初始化生成集成模块
+    # 3. 初始化生成整合模組
     self.generation_module = GenerationIntegrationModule(
         model_name=self.config.llm_model,
         temperature=self.config.temperature,
@@ -255,160 +255,160 @@ def initialize_system(self):
     )
 ```
 
-初始化过程按照依赖关系有序进行，保证每个模块都能正确设置。
+初始化過程按照依賴關係有序進行，保證每個模組都能正確設定。
 
-### 2.3 知识库构建流程
+### 2.3 知識庫構建流程
 
 ```python
 def build_knowledge_base(self):
-    """构建知识库"""
-    # 1. 尝试加载已保存的索引
+    """構建知識庫"""
+    # 1. 嘗試載入已儲存的索引
     vectorstore = self.index_module.load_index()
     
     if vectorstore is not None:
-        # 加载已有索引，但仍需要文档和分块用于检索模块
+        # 載入已有索引，但仍需要文件和分塊用於檢索模組
         self.data_module.load_documents()
         chunks = self.data_module.chunk_documents()
     else:
-        # 构建新索引的完整流程
+        # 構建新索引的完整流程
         self.data_module.load_documents()
         chunks = self.data_module.chunk_documents()
         vectorstore = self.index_module.build_vector_index(chunks)
         self.index_module.save_index()
     
-    # 初始化检索优化模块
+    # 初始化檢索最佳化模組
     self.retrieval_module = RetrievalOptimizationModule(vectorstore, chunks)
 ```
 
-这个流程运用了之前设计的索引缓存机制，能够大幅提升系统启动速度。
+這個流程運用了之前設計的索引快取機制，能夠大幅提升系統啟動速度。
 
-### 2.4 智能问答流程
+### 2.4 智慧問答流程
 
 ```python
 def ask_question(self, question: str, stream: bool = False):
-    """回答用户问题"""
-    # 1. 查询路由
+    """回答使用者問題"""
+    # 1. 查詢路由
     route_type = self.generation_module.query_router(question)
 
-    # 2. 智能查询重写（根据路由类型）
+    # 2. 智慧查詢重寫（根據路由型別）
     if route_type == 'list':
-        rewritten_query = question  # 列表查询保持原样
+        rewritten_query = question  # 列表查詢保持原樣
     else:
         rewritten_query = self.generation_module.query_rewrite(question)
 
-    # 3. 检索相关子块
+    # 3. 檢索相關子塊
     relevant_chunks = self.retrieval_module.hybrid_search(rewritten_query, top_k=self.config.top_k)
 
-    # 4. 根据路由类型选择回答方式
+    # 4. 根據路由型別選擇回答方式
     if route_type == 'list':
-        # 列表查询：返回菜品名称列表
+        # 列表查詢：返回菜品名稱列表
         relevant_docs = self.data_module.get_parent_documents(relevant_chunks)
         return self.generation_module.generate_list_answer(question, relevant_docs)
     else:
-        # 详细查询：获取完整文档并生成详细回答
+        # 詳細查詢：獲取完整文件並生成詳細回答
         relevant_docs = self.data_module.get_parent_documents(relevant_chunks)
 
         if route_type == "detail":
-            # 详细查询使用分步指导模式
+            # 詳細查詢使用分步指導模式
             return self.generation_module.generate_step_by_step_answer(question, relevant_docs)
         else:
-            # 一般查询使用基础回答模式
+            # 一般查詢使用基礎回答模式
             return self.generation_module.generate_basic_answer(question, relevant_docs)
 ```
 
-这部分展示了程序执行流程：智能路由 → 查询优化 → 混合检索 → 父子文档处理 → 多模式生成。
+這部分展示了程式執行流程：智慧路由 → 查詢最佳化 → 混合檢索 → 父子文件處理 → 多模式生成。
 
-### 2.5 实际使用示例
+### 2.5 實際使用示例
 
-#### 2.5.1 不同查询类型的效果
+#### 2.5.1 不同查詢型別的效果
 
-**列表查询示例**：
+**列表查詢示例**：
 ```
-用户问题: "推荐几道简单的素菜"
-查询类型: list
-生成结果:
-为您推荐以下菜品：
-1. 西红柿炒鸡蛋
-2. 土豆丝
+使用者問題: "推薦幾道簡單的素菜"
+查詢型別: list
+生成結果:
+為您推薦以下菜品：
+1. 西紅柿炒雞蛋
+2. 土豆絲
 3. 青椒炒豆腐
 ```
 
-**详细查询示例**：
+**詳細查詢示例**：
 ```
-用户问题: "宫保鸡丁怎么做？"
-查询类型: detail
-生成结果:
-## 🥘 菜品介绍
-宫保鸡丁是一道经典川菜，口感麻辣鲜香...
+使用者問題: "宮保雞丁怎麼做？"
+查詢型別: detail
+生成結果:
+## 🥘 菜品介紹
+宮保雞丁是一道經典川菜，口感麻辣鮮香...
 
 ## 🛒 所需食材
-- 鸡胸肉 300g
+- 雞胸肉 300g
 - 花生米 100g
-- 干辣椒 10个
+- 幹辣椒 10個
 ...
 
-## 👨‍🍳 制作步骤
-1. 鸡肉切丁，用料酒和生抽腌制15分钟
-2. 热锅下油，爆炒花生米至微黄盛起
+## 👨‍🍳 製作步驟
+1. 雞肉切丁，用料酒和生抽醃製15分鐘
+2. 熱鍋下油，爆炒花生米至微黃盛起
 ...
 ```
 
-#### 2.5.2 交互式问答
+#### 2.5.2 互動式問答
 
-系统提供了完整的命令行交互界面，启动时会显示"尝尝咸淡RAG系统"的欢迎信息：
+系統提供了完整的命令列互動介面，啟動時會顯示"嚐嚐鹹淡RAG系統"的歡迎資訊：
 
 ```python
 def run_interactive(self):
-    """运行交互式问答"""
+    """執行互動式問答"""
     print("=" * 60)
-    print("🍽️  尝尝咸淡RAG系统 - 交互式问答  🍽️")
+    print("🍽️  嚐嚐鹹淡RAG系統 - 互動式問答  🍽️")
     print("=" * 60)
-    print("💡 解决您的选择困难症，告别'今天吃什么'的世纪难题！")
+    print("💡 解決您的選擇困難症，告別'今天吃什麼'的世紀難題！")
 
-    # 初始化系统和构建知识库
+    # 初始化系統和構建知識庫
     self.initialize_system()
     self.build_knowledge_base()
 
     while True:
-        user_input = input("\n您的问题: ").strip()
+        user_input = input("\n您的問題: ").strip()
         if user_input.lower() in ['退出', 'quit', 'exit']:
             break
 
-        # 询问是否使用流式输出
-        stream_choice = input("是否使用流式输出? (y/n, 默认y): ").strip().lower()
+        # 詢問是否使用流式輸出
+        stream_choice = input("是否使用流式輸出? (y/n, 預設y): ").strip().lower()
         use_stream = stream_choice != 'n'
 
         if use_stream:
-            # 流式输出，实时显示生成过程
+            # 流式輸出，實時顯示生成過程
             for chunk in self.ask_question(user_input, stream=True):
                 print(chunk, end="", flush=True)
         else:
-            # 普通输出
+            # 普通輸出
             answer = self.ask_question(user_input, stream=False)
             print(answer)
 ```
 
-**运行效果示例**：
+**執行效果示例**：
 ```
 ============================================================
-🍽️  尝尝咸淡RAG系统 - 交互式问答  🍽️
+🍽️  嚐嚐鹹淡RAG系統 - 互動式問答  🍽️
 ============================================================
-💡 解决您的选择困难症，告别'今天吃什么'的世纪难题！
+💡 解決您的選擇困難症，告別'今天吃什麼'的世紀難題！
 
-✅ 成功加载已保存的向量索引！
-✅ 系统初始化完成！
+✅ 成功載入已儲存的向量索引！
+✅ 系統初始化完成！
 
-您的问题: 推荐几道简单的素菜
-是否使用流式输出? (y/n, 默认y): y
+您的問題: 推薦幾道簡單的素菜
+是否使用流式輸出? (y/n, 預設y): y
 
-为您推荐以下素菜：
-1. 西红柿炒鸡蛋 - 经典家常菜，简单易做
-2. 土豆丝 - 爽脆可口，适合新手
-3. 青椒炒豆腐 - 营养丰富，制作简单
+為您推薦以下素菜：
+1. 西紅柿炒雞蛋 - 經典家常菜，簡單易做
+2. 土豆絲 - 爽脆可口，適合新手
+3. 青椒炒豆腐 - 營養豐富，製作簡單
 ```
 
-流式输出的实现通过LangChain的`chain.stream()`方法，它会返回一个生成器，每次yield一个文本片段。在交互式界面中，通过`print(chunk, end="", flush=True)`实时输出每个片段，`end=""`避免换行，`flush=True`确保立即显示，从而实现逐字逐句的流式效果。
+流式輸出的實現透過LangChain的`chain.stream()`方法，它會返回一個生成器，每次yield一個文字片段。在互動式介面中，透過`print(chunk, end="", flush=True)`實時輸出每個片段，`end=""`避免換行，`flush=True`確保立即顯示，從而實現逐字逐句的流式效果。
 
-## 三、优化方向
+## 三、最佳化方向
 
-虽然当前系统已经具备了完整的RAG功能，但仍有许多优化空间。未来的优化可以聚焦于几个关键方向的融合与深化：可以通过 **集成图数据库** 将食谱数据构建为知识图谱，来揭示食材、菜品与烹饪方法间的复杂关联，进而支持复杂关系查询（如“和鸡肉搭配的食材有哪些”）、发掘潜在的食材组合并实现基于图的智能推荐。还可以 **融合多模态数据**，结合菜品图片等视觉信息，利用多模态模型进行图文联合检索，不仅能支持“这是什么菜”的视觉搜索，还可以通过图像识别食材来推荐相关菜谱。或者通过 **增强专业知识**，集成营养成分数据库、烹饪技巧知识图谱以及食材替换规则库等外部知识源，系统将能提供精准的营养分析、专业的烹饪指导，并灵活适应用户的饮食过敏或个人偏好。
+雖然當前系統已經具備了完整的RAG功能，但仍有許多最佳化空間。未來的最佳化可以聚焦於幾個關鍵方向的融合與深化：可以透過 **整合圖資料庫** 將食譜資料構建為知識圖譜，來揭示食材、菜品與烹飪方法間的複雜關聯，進而支援複雜關係查詢（如“和雞肉搭配的食材有哪些”）、發掘潛在的食材組合並實現基於圖的智慧推薦。還可以 **融合多模態資料**，結合菜品圖片等視覺資訊，利用多模態模型進行圖文聯合檢索，不僅能支援“這是什麼菜”的視覺搜尋，還可以透過影象識別食材來推薦相關菜譜。或者透過 **增強專業知識**，整合營養成分資料庫、烹飪技巧知識圖譜以及食材替換規則庫等外部知識源，系統將能提供精準的營養分析、專業的烹飪指導，並靈活適應使用者的飲食過敏或個人偏好。

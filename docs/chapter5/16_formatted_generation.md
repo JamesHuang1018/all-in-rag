@@ -1,173 +1,173 @@
-# 第一节 格式化生成
+# 第一節 格式化生成
 
-从大语言模型（LLM）那里获得一段非结构化的文本在应用中常常不满足实际需求。为了实现更复杂的逻辑、与外部工具交互或以用户友好的方式展示数据，需要模型能够输出具有特定结构的数据，例如 JSON 或 XML。
+從大語言模型（LLM）那裡獲得一段非結構化的文字在應用中常常不滿足實際需求。為了實現更復雜的邏輯、與外部工具互動或以使用者友好的方式展示資料，需要模型能夠輸出具有特定結構的資料，例如 JSON 或 XML。
 
-本节将讨论实现格式化生成的几种主流方法，包括 LangChain、LlamaIndex 等框架内置的解决方案，不依赖框架的实现思路，以及一种更强大的技术——Function Calling。
+本節將討論實現格式化生成的幾種主流方法，包括 LangChain、LlamaIndex 等框架內建的解決方案，不依賴框架的實現思路，以及一種更強大的技術——Function Calling。
 
-> 在生成阶段，提示词工程也是一个重要的部分。但是因为在前面几个章节中已经有了比较多的介绍，所以本章就不再赘述了。
+> 在生成階段，提示詞工程也是一個重要的部分。但是因為在前面幾個章節中已經有了比較多的介紹，所以本章就不再贅述了。
 
-## 一、为什么需要格式化生成？
+## 一、為什麼需要格式化生成？
 
-先来看几个具体的应用场景：
+先來看幾個具體的應用場景：
 
-- **RAG 驱动的电商客服**：当用户询问“推荐几款适合程序员的键盘”时，我们希望 LLM 返回一个包含产品名称、价格、特性和购买链接的 JSON 列表，而不是一段描述性文字，以便前端直接渲染成商品卡片。
-- **自然语言转 API 调用**：用户说“帮我查一下明天从上海到北京的航班”，系统需要将这句话解析成一个结构化的 API 请求，如 `{"departure": "上海", "destination": "北京", "date": "2025-07-18"}`。
-- **数据自动提取**：从一篇新闻文章中，自动抽取出事件、时间、地点、涉及人物等关键信息，并以结构化形式存入数据库。
+- **RAG 驅動的電商客服**：當使用者詢問“推薦幾款適合程式設計師的鍵盤”時，我們希望 LLM 返回一個包含產品名稱、價格、特性和購買連結的 JSON 列表，而不是一段描述性文字，以便前端直接渲染成商品卡片。
+- **自然語言轉 API 呼叫**：使用者說“幫我查一下明天從上海到北京的航班”，系統需要將這句話解析成一個結構化的 API 請求，如 `{"departure": "上海", "destination": "北京", "date": "2025-07-18"}`。
+- **資料自動提取**：從一篇新聞文章中，自動抽取出事件、時間、地點、涉及人物等關鍵資訊，並以結構化形式存入資料庫。
 
-在这些场景中，格式化生成是连接 LLM 的自然语言理解能力和下游应用程序的程序化逻辑之间的关键。
+在這些場景中，格式化生成是連線 LLM 的自然語言理解能力和下游應用程式的程式化邏輯之間的關鍵。
 
-## 二、格式化生成的实现方法
+## 二、格式化生成的實現方法
 
-> [完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C5/01_pydantic.py)
+> [完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C5/01_pydantic.py)
 
 ### 2.1 Output Parsers
 
-LangChain 提供了一个强大的组件——`OutputParsers`（输出解析器），专门用于处理 LLM 的输出，其主要思想是在发送给 LLM 的提示（Prompt）中自动注入一段关于如何格式化输出的指令，并在得到结果后将 LLM 返回的纯文本字符串解析成预期的结构化数据（如 Python 对象）。
+LangChain 提供了一個強大的元件——`OutputParsers`（輸出解析器），專門用於處理 LLM 的輸出，其主要思想是在傳送給 LLM 的提示（Prompt）中自動注入一段關於如何格式化輸出的指令，並在得到結果後將 LLM 返回的純文字字串解析成預期的結構化資料（如 Python 物件）。
 
-LangChain 提供了多种开箱即用的解析器，例如：
+LangChain 提供了多種開箱即用的解析器，例如：
 
-- **StrOutputParser**：最基础的输出解析器，它简单地将 LLM 的输出作为字符串返回。
-- **JsonOutputParser**：可以解析包含嵌套结构和列表的复杂 JSON 字符串。
-- **PydanticOutputParser**：通过与 Pydantic 模型结合，可以实现对输出格式最严格的定义和验证。
+- **StrOutputParser**：最基礎的輸出解析器，它簡單地將 LLM 的輸出作為字串返回。
+- **JsonOutputParser**：可以解析包含巢狀結構和列表的複雜 JSON 字串。
+- **PydanticOutputParser**：透過與 Pydantic 模型結合，可以實現對輸出格式最嚴格的定義和驗證。
 
-接下来通过一个具体的代码示例，重点分析 `PydanticOutputParser` 的工作原理。它通过将用户定义的 Pydantic 数据模型转换为详细的格式指令，并注入到提示词中，来引导 LLM 生成严格符合该数据结构的 JSON 输出。最后再将模型返回的 JSON 字符串安全地解析为 Pydantic 对象实例。
+接下來透過一個具體的程式碼示例，重點分析 `PydanticOutputParser` 的工作原理。它透過將使用者定義的 Pydantic 資料模型轉換為詳細的格式指令，並注入到提示詞中，來引導 LLM 生成嚴格符合該資料結構的 JSON 輸出。最後再將模型返回的 JSON 字串安全地解析為 Pydantic 物件例項。
 
 ```python
-# (此处省略了导入和 LLM 初始化代码)
+# (此處省略了匯入和 LLM 初始化程式碼)
 
-# 1. 定义期望的数据结构
+# 1. 定義期望的資料結構
 class PersonInfo(BaseModel):
-    """用于存储个人信息的数据结构。"""
+    """用於儲存個人資訊的資料結構。"""
     name: str = Field(description="人物姓名")
-    age: int = Field(description="人物年龄")
+    age: int = Field(description="人物年齡")
     skills: List[str] = Field(description="技能列表")
 
-# 2. 基于 Pydantic 模型，创建解析器
+# 2. 基於 Pydantic 模型，建立解析器
 parser = PydanticOutputParser(pydantic_object=PersonInfo)
 
-# 3. 创建提示模板，注入格式指令
+# 3. 建立提示模板，注入格式指令
 prompt = PromptTemplate(
-    template="请根据以下文本提取信息。\n{format_instructions}\n{text}\n",
+    template="請根據以下文字提取資訊。\n{format_instructions}\n{text}\n",
     input_variables=["text"],
     partial_variables={"format_instructions": parser.get_format_instructions()},
 )
 
-# 4. 创建处理链 (假定 llm 已被初始化)
+# 4. 建立處理鏈 (假定 llm 已被初始化)
 chain = prompt | llm | parser
 
-# 5. 执行调用
-text = "张三今年30岁，他擅长Python和Go语言。"
+# 5. 執行呼叫
+text = "張三今年30歲，他擅長Python和Go語言。"
 result = chain.invoke({"text": text})
 
-# 6. 打印结果
+# 6. 列印結果
 print(result)
-# name='张三' age=30 skills=['Python', 'Go语言']
+# name='張三' age=30 skills=['Python', 'Go語言']
 ```
 
-（1）**定义数据模型**：使用 Pydantic 的 `BaseModel` 定义 `PersonInfo` 类，这不仅是一个 Python 对象，更是一个清晰的数据结构规范（Schema）。`Field` 中的 `description` 描述文本将直接作为指令提供给大模型，因此其表述需要清晰准确。
+（1）**定義資料模型**：使用 Pydantic 的 `BaseModel` 定義 `PersonInfo` 類，這不僅是一個 Python 物件，更是一個清晰的資料結構規範（Schema）。`Field` 中的 `description` 描述文字將直接作為指令提供給大模型，因此其表述需要清晰準確。
 
-（2）**生成格式指令**：当 `PydanticOutputParser` 实例化后，其 `get_format_instructions()` 方法会执行以下操作：
-- 调用 Pydantic 模型的 `.model_json_schema()` 方法，提取出该数据结构的 JSON Schema 定义。
-- 对该 Schema 进行简化，并将其嵌入到一个预设的、指导性的提示模板中。这个模板明确要求 LLM 输出一个符合该 Schema 的 JSON 对象。
+（2）**生成格式指令**：當 `PydanticOutputParser` 例項化後，其 `get_format_instructions()` 方法會執行以下操作：
+- 呼叫 Pydantic 模型的 `.model_json_schema()` 方法，提取出該資料結構的 JSON Schema 定義。
+- 對該 Schema 進行簡化，並將其嵌入到一個預設的、指導性的提示模板中。這個模板明確要求 LLM 輸出一個符合該 Schema 的 JSON 物件。
 
-（3）**构建并执行调用链**：通过 LangChain 表达式语言（LCEL），将 `prompt`、`llm` 和 `parser` 链接起来。当调用链被触发时：
-- `prompt` 会将用户输入（`text`）和上一步生成的格式指令（`format_instructions`）组合成最终的提示，发送给 `llm`。
-- `llm` 根据这个包含严格格式要求的提示，生成一个 JSON 格式的字符串。
+（3）**構建並執行呼叫鏈**：透過 LangChain 表示式語言（LCEL），將 `prompt`、`llm` 和 `parser` 連結起來。當呼叫鏈被觸發時：
+- `prompt` 會將使用者輸入（`text`）和上一步生成的格式指令（`format_instructions`）組合成最終的提示，傳送給 `llm`。
+- `llm` 根據這個包含嚴格格式要求的提示，生成一個 JSON 格式的字串。
 
-（4）**解析与验证**：`PydanticOutputParser` 接收到 LLM 返回的字符串后，会执行一个两步解析过程：
-- 首先，它继承自 `JsonOutputParser`，会将 LLM 输出的文本字符串解析成一个 Python 字典。
-- 然后，最关键的一步，它会使用 `PersonInfo.model_validate()` 方法，用定义的数据模型来验证这个字典。如果字典的键和值类型都符合 `PersonInfo` 的定义，解析器就会返回一个 `PersonInfo` 的实例对象；如果验证失败，则会抛出一个 `OutputParserException` 异常。
+（4）**解析與驗證**：`PydanticOutputParser` 接收到 LLM 返回的字串後，會執行一個兩步解析過程：
+- 首先，它繼承自 `JsonOutputParser`，會將 LLM 輸出的文字字串解析成一個 Python 字典。
+- 然後，最關鍵的一步，它會使用 `PersonInfo.model_validate()` 方法，用定義的資料模型來驗證這個字典。如果字典的鍵和值型別都符合 `PersonInfo` 的定義，解析器就會返回一個 `PersonInfo` 的例項物件；如果驗證失敗，則會丟擲一個 `OutputParserException` 異常。
 
-### 2.2 LlamaIndex 的输出解析
+### 2.2 LlamaIndex 的輸出解析
 
-LlamaIndex 的输出解析与生成过程紧密结合，主要体现在两大核心组件中，分别是响应合成（Response Synthesis）和结构化输出（Structured Output）。
+LlamaIndex 的輸出解析與生成過程緊密結合，主要體現在兩大核心元件中，分別是響應合成（Response Synthesis）和結構化輸出（Structured Output）。
 
-在 RAG 流程中，检索器召回一系列相关的文本块（Nodes）后，并不是简单地将它们拼接起来。响应合成器（Response Synthesizer）负责接收这些文本块和原始查询，并以一种更智能的方式将它们呈现给 LLM 以生成最终答案。例如，它可以逐块处理信息并迭代地优化答案（`refine` 模式），或者将尽可能多的文本块压缩进单次 LLM 调用中（`compact` 模式）。这个阶段的默认目标是生成一段高质量的**文本**回答。
+在 RAG 流程中，檢索器召回一系列相關的文字塊（Nodes）後，並不是簡單地將它們拼接起來。響應合成器（Response Synthesizer）負責接收這些文字塊和原始查詢，並以一種更智慧的方式將它們呈現給 LLM 以生成最終答案。例如，它可以逐塊處理資訊並迭代地最佳化答案（`refine` 模式），或者將儘可能多的文字塊壓縮排單次 LLM 呼叫中（`compact` 模式）。這個階段的預設目標是生成一段高質量的**文字**回答。
 
-当需要 LLM 返回结构化数据（如 JSON）而非纯文本时，LlamaIndex 主要使用 **Pydantic 程序（Pydantic Programs）**。这与 LangChain 的 `PydanticOutputParser` 思想一致：
+當需要 LLM 返回結構化資料（如 JSON）而非純文字時，LlamaIndex 主要使用 **Pydantic 程式（Pydantic Programs）**。這與 LangChain 的 `PydanticOutputParser` 思想一致：
 
-- **定义 Schema**：开发者首先定义一个 Pydantic 模型，明确所需输出的数据结构、字段和类型。
-- **引导生成**：LlamaIndex 会将这个 Pydantic 模型转换成 LLM 能理解的格式指令。如果底层的 LLM 支持 Function Calling，LlamaIndex 会优先使用该功能以获得更可靠的结构化输出。如果不支持，它会回退到将 JSON Schema 注入到提示词中的方法。
-- **解析验证**：最后，LLM 返回的输出会被自动解析并用 Pydantic 模型进行验证，确保其类型和结构完全正确，最终返回一个 Pydantic 对象实例。
+- **定義 Schema**：開發者首先定義一個 Pydantic 模型，明確所需輸出的資料結構、欄位和型別。
+- **引導生成**：LlamaIndex 會將這個 Pydantic 模型轉換成 LLM 能理解的格式指令。如果底層的 LLM 支援 Function Calling，LlamaIndex 會優先使用該功能以獲得更可靠的結構化輸出。如果不支援，它會回退到將 JSON Schema 注入到提示詞中的方法。
+- **解析驗證**：最後，LLM 返回的輸出會被自動解析並用 Pydantic 模型進行驗證，確保其型別和結構完全正確，最終返回一個 Pydantic 物件例項。
 
-### 2.3 不依赖框架的简单实现思路
+### 2.3 不依賴框架的簡單實現思路
 
-如果不想依赖特定的框架，也可以通过提示工程的技巧来实现格式化生成。
+如果不想依賴特定的框架，也可以透過提示工程的技巧來實現格式化生成。
 
-主要思路是在提示中给出清晰、明确的指令和示例。以下是一些实用技巧：
+主要思路是在提示中給出清晰、明確的指令和示例。以下是一些實用技巧：
 
-- **明确要求 JSON 格式**：在提示中直接、强硬地要求模型“必须返回一个 JSON 对象”、“不要包含任何解释性文字，只返回 JSON”。
-- **提供 JSON Schema**：在提示中给出你想要的 JSON 对象的模式（Schema），描述每个键的含义和数据类型。
-- **提供 few-shot 示例**：给出 1-2 个“用户输入 -> 期望的 JSON 输出”的完整示例，让模型学习输出的格式和风格。
-- **使用语法约束**：对于一些本地部署的开源模型（如通过 `llama.cpp` 运行的模型），可以使用 GBNF (GGML BNF) 等语法文件来强制约束模型的输出，确保其生成的每一个 token 都严格符合预定义的 JSON 语法。这是最严格也是最可靠的非 Function Calling 方法。
+- **明確要求 JSON 格式**：在提示中直接、強硬地要求模型“必須返回一個 JSON 物件”、“不要包含任何解釋性文字，只返回 JSON”。
+- **提供 JSON Schema**：在提示中給出你想要的 JSON 物件的模式（Schema），描述每個鍵的含義和資料型別。
+- **提供 few-shot 示例**：給出 1-2 個“使用者輸入 -> 期望的 JSON 輸出”的完整示例，讓模型學習輸出的格式和風格。
+- **使用語法約束**：對於一些本地部署的開源模型（如透過 `llama.cpp` 執行的模型），可以使用 GBNF (GGML BNF) 等語法檔案來強制約束模型的輸出，確保其生成的每一個 token 都嚴格符合預定義的 JSON 語法。這是最嚴格也是最可靠的非 Function Calling 方法。
 
 ## 三、Function Calling
 
-Function Calling（或称 Tool Calling）是近年来 LLM 领域的一个重要进展，提升了模型与外部世界交互和生成结构化数据的能力。
+Function Calling（或稱 Tool Calling）是近年來 LLM 領域的一個重要進展，提升了模型與外部世界互動和生成結構化資料的能力。
 
-> [本节完整代码](https://github.com/datawhalechina/all-in-rag/blob/main/code/C5/02_function_calling_example.py)
+> [本節完整程式碼](https://github.com/datawhalechina/all-in-rag/blob/main/code/C5/02_function_calling_example.py)
 
-### 3.1 概念与工作流程
+### 3.1 概念與工作流程
 
-Function Calling 的本质是一个多轮对话流程，让模型、代码和外部工具（如 API）协同工作。其核心工作流如下：
+Function Calling 的本質是一個多輪對話流程，讓模型、程式碼和外部工具（如 API）協同工作。其核心工作流如下：
 
-（1）**定义工具**：首先，在代码中以特定格式（通常是 JSON Schema）定义好可用的工具，包括工具的名称、功能描述、以及需要的参数。
+（1）**定義工具**：首先，在程式碼中以特定格式（通常是 JSON Schema）定義好可用的工具，包括工具的名稱、功能描述、以及需要的引數。
 
-（2）**用户提问**：用户发起一个需要调用工具才能回答的请求。
+（2）**使用者提問**：使用者發起一個需要呼叫工具才能回答的請求。
 
-（3）**模型决策**：模型接收到请求后，分析用户的意图，并匹配最合适的工具。它不会直接回答，而是返回一个包含 `tool_calls` 的特殊响应。这个响应相当于一个指令：“请调用某某工具，并使用这些参数”。
+（3）**模型決策**：模型接收到請求後，分析使用者的意圖，並匹配最合適的工具。它不會直接回答，而是返回一個包含 `tool_calls` 的特殊響應。這個響應相當於一個指令：“請呼叫某某工具，並使用這些引數”。
 
-（4）**代码执行**：应用接收到这个指令，解析出工具名称和参数，然后**在代码层面实际执行**这个工具（例如，调用一个真实的天气 API）。
+（4）**程式碼執行**：應用接收到這個指令，解析出工具名稱和引數，然後**在程式碼層面實際執行**這個工具（例如，呼叫一個真實的天氣 API）。
 
-（5）**结果反馈**：将工具的执行结果（例如，从 API 获取的真实天气数据）包装成一个 `role` 为 `tool` 的消息，再次发送给模型。
+（5）**結果反饋**：將工具的執行結果（例如，從 API 獲取的真實天氣資料）包裝成一個 `role` 為 `tool` 的訊息，再次傳送給模型。
 
-（6）**最终生成**：模型接收到工具的执行结果后，结合原始问题和工具返回的信息，生成最终的、自然的语言回答。
+（6）**最終生成**：模型接收到工具的執行結果後，結合原始問題和工具返回的資訊，生成最終的、自然的語言回答。
 
-### 3.2 Function Calling 实践
+### 3.2 Function Calling 實踐
 
-接下来，直接使用 `openai` 的例子，来展示上述流程。
+接下來，直接使用 `openai` 的例子，來展示上述流程。
 
 
 ```python
-# 1. 定义工具
+# 1. 定義工具
 tools = [...] 
 
-# 2. 用户提问
-messages = [{"role": "user", "content": "杭州今天天气怎么样？"}]
+# 2. 使用者提問
+messages = [{"role": "user", "content": "杭州今天天氣怎麼樣？"}]
 message = send_messages(messages, tools=tools)
 
-# 3. 代码执行：模拟调用天气API，并将结果添加到消息历史
+# 3. 程式碼執行：模擬呼叫天氣API，並將結果新增到訊息歷史
 if message.tool_calls:
     tool_call = message.tool_calls[0]
-    messages.append(message) # 添加模型的回复
-    tool_output = "24℃，晴朗" # 模拟API结果
+    messages.append(message) # 新增模型的回覆
+    tool_output = "24℃，晴朗" # 模擬API結果
     messages.append({
         "role": "tool", 
         "tool_call_id": tool_call.id, 
         "content": tool_output
-    }) # 添加工具执行结果
+    }) # 新增工具執行結果
 
-    # 4. 第二次调用 (`Tool -> Model`)：将工具结果返回给模型，获取最终回答
+    # 4. 第二次呼叫 (`Tool -> Model`)：將工具結果返回給模型，獲取最終回答
     final_message = send_messages(messages, tools=tools)
     print(final_message.content)
 ```
 
-关键步骤：
+關鍵步驟：
 
-（1）**定义 `tools`**：用一个列表包含了所有可用的函数定义。每个定义都是一个 JSON 对象，严格描述了函数的名称 (`name`)、功能 (`description`) 和参数 (`parameters`)。这个描述的质量直接决定了模型能否正确选择和使用工具。
+（1）**定義 `tools`**：用一個列表包含了所有可用的函式定義。每個定義都是一個 JSON 物件，嚴格描述了函式的名稱 (`name`)、功能 (`description`) 和引數 (`parameters`)。這個描述的質量直接決定了模型能否正確選擇和使用工具。
 
-（2）**第一次调用 (`User -> Model`)**：将用户的原始问题（`"role": "user"`）和 `tools` 列表一同发送给模型。
+（2）**第一次呼叫 (`User -> Model`)**：將使用者的原始問題（`"role": "user"`）和 `tools` 列表一同傳送給模型。
 
-（3）**处理 `tool_calls`**：检查模型的响应中是否包含 `tool_calls`。如果包含，就说明模型决定使用工具。解析出函数名和参数，并**模拟执行**（在真实场景中，这里会是真实的 API 调用）。
+（3）**處理 `tool_calls`**：檢查模型的響應中是否包含 `tool_calls`。如果包含，就說明模型決定使用工具。解析出函式名和引數，並**模擬執行**（在真實場景中，這裡會是真實的 API 呼叫）。
 
-（4）**第二次调用 (`Tool -> Model`)**：将原始的用户问题、模型的工具调用响应，以及模拟执行后得到的工具结果（`"role": "tool"`），一同打包成新的对话历史，再次发送给模型。
+（4）**第二次呼叫 (`Tool -> Model`)**：將原始的使用者問題、模型的工具呼叫響應，以及模擬執行後得到的工具結果（`"role": "tool"`），一同打包成新的對話歷史，再次傳送給模型。
 
-（5）**获取最终答案**：模型在看到工具的执行结果后，就能用自然语言回答用户最初的问题了。
+（5）**獲取最終答案**：模型在看到工具的執行結果後，就能用自然語言回答使用者最初的問題了。
 
-### 3.3 Function Calling 的优势
+### 3.3 Function Calling 的優勢
 
-相比于单纯通过提示工程“请求”模型输出 JSON，Function Calling 的优势在于：
+相比於單純透過提示工程“請求”模型輸出 JSON，Function Calling 的優勢在於：
 
-- **可靠性更高**：这是模型原生支持的能力，相比于解析可能格式不稳定的纯文本输出，这种方式得到的结构化数据更稳定、精确。
-- **意图识别**：它不仅仅是格式化输出，更包含了“意图到函数的映射”。模型能根据用户问题主动选择最合适的工具。
-- **与外部世界交互**：它是构建能执行实际任务的 AI 代理（Agent）的核心基础，让 LLM 可以查询数据库、调用 API、控制智能家居等。
+- **可靠性更高**：這是模型原生支援的能力，相比於解析可能格式不穩定的純文字輸出，這種方式得到的結構化資料更穩定、精確。
+- **意圖識別**：它不僅僅是格式化輸出，更包含了“意圖到函式的對映”。模型能根據使用者問題主動選擇最合適的工具。
+- **與外部世界互動**：它是構建能執行實際任務的 AI 代理（Agent）的核心基礎，讓 LLM 可以查詢資料庫、呼叫 API、控制智慧家居等。

@@ -1,404 +1,404 @@
-# 第二节 准备工作
+# 第二節 準備工作
 
-> 本节环境配置方面主推两种基于浏览器的集成开发环境。不管是手机、平板还是电脑，随时都可以上号运行代码。虽然手机平板可能体验不佳，但胜在能用。
+> 本節環境配置方面主推兩種基於瀏覽器的整合開發環境。不管是手機、平板還是電腦，隨時都可以上號執行程式碼。雖然手機平板可能體驗不佳，但勝在能用。
 
 ## 一、大模型 API 配置
 
-### 1.1 AIHubmix API 申请
+### 1.1 AIHubmix API 申請
 
-AIHubmix 是一个美国平台，公司注册在美国的特拉华州，一站式聚合了全球主流的 AI 模型，最新的模型通常能在发布当天最晚不超过 1 周就会支持。完全对接相关模型的云厂商（OpenAI 对接的是 Azure 云，Gemini 对接的 Google 官方，Claude 对接的是 AWS，其他开源等模型是对接到各大知名云厂商或者推理公司）。AIHubmix 的服务器是在美国谷歌云上采用集群部署，同时因为完全对接云厂商，所以稳定性非常好，有多端点路由机制，可以达到比直连官方更稳定的效果。
+AIHubmix 是一個美國平臺，公司註冊在美國的特拉華州，一站式聚合了全球主流的 AI 模型，最新的模型通常能在釋出當天最晚不超過 1 周就會支援。完全對接相關模型的雲廠商（OpenAI 對接的是 Azure 雲，Gemini 對接的 Google 官方，Claude 對接的是 AWS，其他開源等模型是對接到各大知名雲廠商或者推理公司）。AIHubmix 的伺服器是在美國谷歌雲上採用叢集部署，同時因為完全對接雲廠商，所以穩定性非常好，有多端點路由機制，可以達到比直連官方更穩定的效果。
 
-> AIHubmix 提供的免费模型足够我们完成项目的学习。
+> AIHubmix 提供的免費模型足夠我們完成專案的學習。
 
-1.  **访问 AIHubmix 平台**
+1.  **訪問 AIHubmix 平臺**
 
-    打开浏览器，访问 [AIHubmix](https://aihubmix.com/?aff=anNj)。
+    開啟瀏覽器，訪問 [AIHubmix](https://aihubmix.com/?aff=anNj)。
 
     ![AIHubmix](./images/1.png)
 
-2.  **登录或注册账号**
+2.  **登入或註冊賬號**
 
-    如果已有账号，可以直接登录。如果没有，请点击页面右上角的注册按钮，使用邮箱或手机号完成注册。
+    如果已有賬號，可以直接登入。如果沒有，請點選頁面右上角的註冊按鈕，使用郵箱或手機號完成註冊。
 
-3.  **模型筛选**
+3.  **模型篩選**
 
-    注册完成后，来到[模型页面](https://aihubmix.com/models)。标签选择`免费`，可以看到官方提供了一定数量的免费模型。而且 AIHubmix 还提供了很多嵌入和重排序的国内外模型选择，这些在 RAG 领域都很常用。
+    註冊完成後，來到[模型頁面](https://aihubmix.com/models)。標籤選擇`免費`，可以看到官方提供了一定數量的免費模型。而且 AIHubmix 還提供了很多嵌入和重排序的國內外模型選擇，這些在 RAG 領域都很常用。
 
-    ![模型页面](./images/2.png)
+    ![模型頁面](./images/2.png)
 
-4.  **管理 API 密钥**
+4.  **管理 API 金鑰**
 
-    接着进入[密钥管理页面](https://console.aihubmix.com/token)，如下图所示，默认已经有了一个密钥可以直接复制使用。当然也可以点击 `创建 Key` 填写名称后重新创建一个。
+    接著進入[金鑰管理頁面](https://console.aihubmix.com/token)，如下圖所示，預設已經有了一個金鑰可以直接複製使用。當然也可以點選 `建立 Key` 填寫名稱後重新建立一個。
 
-    ![密钥管理](./images/3.png)
+    ![金鑰管理](./images/3.png)
 
-### 1.2 DeepSeek API 申请
+### 1.2 DeepSeek API 申請
 
-要使用 Deepseek 提供的大语言模型服务，你首先需要一个 API Key。下面是申请步骤：
+要使用 Deepseek 提供的大語言模型服務，你首先需要一個 API Key。下面是申請步驟：
 
-1.  **访问 Deepseek 开放平台**
+1.  **訪問 Deepseek 開放平臺**
 
-    打开浏览器，访问 [Deepseek 开放平台](https://platform.deepseek.com/)。
+    開啟瀏覽器，訪問 [Deepseek 開放平臺](https://platform.deepseek.com/)。
 
-    ![Deepseek 平台首页](./images/1_2_1.webp)
+    ![Deepseek 平臺首頁](./images/1_2_1.webp)
 
-2.  **登录或注册账号**
+2.  **登入或註冊賬號**
 
-    如果你已有账号，请直接登录。如果没有，请点击页面上的注册按钮，使用邮箱或手机号完成注册。
+    如果你已有賬號，請直接登入。如果沒有，請點選頁面上的註冊按鈕，使用郵箱或手機號完成註冊。
 
-3.  **创建新的 API 密钥**
+3.  **建立新的 API 金鑰**
 
-    登录成功后，在页面左侧的导航栏中找到并点击 `API Keys`。在 API 管理页面，点击 `创建 API key` 按钮。输入一个跟其他api key不重复的名称后点击创建。
+    登入成功後，在頁面左側的導航欄中找到並點選 `API Keys`。在 API 管理頁面，點選 `建立 API key` 按鈕。輸入一個跟其他api key不重複的名稱後點選建立。
 
-    ![创建新密钥按钮](./images/1_2_2.webp)
+    ![建立新金鑰按鈕](./images/1_2_2.webp)
 
-4.  **保存 API Key**
+4.  **儲存 API Key**
 
-    系统会为你生成一个新的 API 密钥。请**立即复制**并将其保存在一个安全的地方。
+    系統會為你生成一個新的 API 金鑰。請**立即複製**並將其儲存在一個安全的地方。
 
-    > 注意：出于安全原因，这个密钥只会完整显示一次，关闭弹窗后就没法再看到了。
+    > 注意：出於安全原因，這個金鑰只會完整顯示一次，關閉彈窗後就沒法再看到了。
 
-    ![复制并保存密钥](./images/1_2_3.webp)
+    ![複製並儲存金鑰](./images/1_2_3.webp)
 
-## 二、GitHub Codespaces 环境配置（推荐）
+## 二、GitHub Codespaces 環境配置（推薦）
 
-> 首先确定是否具有可以流畅访问 GitHub 的网络环境，若无法流畅访问请使用下面的Cloud Studio
+> 首先確定是否具有可以流暢訪問 GitHub 的網路環境，若無法流暢訪問請使用下面的Cloud Studio
 
-GitHub Codespaces 是 GitHub 提供的一项服务，允许开发者在云端创建、编辑和运行代码。它提供了一个预配置的开发环境，包括代码编辑器、终端、调试工具等，可以直接在浏览器中使用。
+GitHub Codespaces 是 GitHub 提供的一項服務，允許開發者在雲端建立、編輯和執行程式碼。它提供了一個預配置的開發環境，包括程式碼編輯器、終端、除錯工具等，可以直接在瀏覽器中使用。
 
-### 2.1 创建Codespaces
+### 2.1 建立Codespaces
 
-1.  **访问项目地址**
+1.  **訪問專案地址**
 
-    打开浏览器，访问 [all-in-rag](https://github.com/datawhalechina/all-in-rag)
+    開啟瀏覽器，訪問 [all-in-rag](https://github.com/datawhalechina/all-in-rag)
 
-2.  **创建新分支**
-    在项目页面的右上角，点击 `Fork` 按钮，创建一个新的分支。稍等一会儿即可创建成功。
+2.  **建立新分支**
+    在專案頁面的右上角，點選 `Fork` 按鈕，建立一個新的分支。稍等一會兒即可建立成功。
 
-    ![创建新分支1](./images/1_2_4.webp)
+    ![建立新分支1](./images/1_2_4.webp)
 
-    ![创建新分支2](./images/1_2_5.webp)
+    ![建立新分支2](./images/1_2_5.webp)
 
-3.  **创建Codespaces**
-    在项目页面的右上角，点击 `Code` 按钮，然后选择 `Codespaces` 选项卡。点击 `New codespace` 按钮，等待新的 Codespaces 环境创建成功。
+3.  **建立Codespaces**
+    在專案頁面的右上角，點選 `Code` 按鈕，然後選擇 `Codespaces` 選項卡。點選 `New codespace` 按鈕，等待新的 Codespaces 環境建立成功。
 
-    ![创建Codespaces](./images/1_2_6.webp)
+    ![建立Codespaces](./images/1_2_6.webp)
 
-4.  **再次进入Codespaces**
-    网页关闭后，找到刚才新建的存储库，点击红框框选内容即可重新进入 codespace 环境。
+4.  **再次進入Codespaces**
+    網頁關閉後，找到剛才新建的儲存庫，點選紅框框選內容即可重新進入 codespace 環境。
 
-    ![再次进入Codespaces](./images/1_2_7.webp)
+    ![再次進入Codespaces](./images/1_2_7.webp)
 
-5.  **额度设置**
-    找到 GitHub 的账户设置中的 codespace 设置，挂起时间建议根据自己情况调整（时间过长会浪费额度，免费账号提供了单核120小时的额度）
+5.  **額度設定**
+    找到 GitHub 的賬戶設定中的 codespace 設定，掛起時間建議根據自己情況調整（時間過長會浪費額度，免費賬號提供了單核120小時的額度）
 
-    ![额度设置](./images/1_2_8.webp)
+    ![額度設定](./images/1_2_8.webp)
 
-### 2.2 python环境配置
+### 2.2 python環境配置
 
-进入 IDE 后先选择下方终端
+進入 IDE 後先選擇下方終端
 
-![进入终端](./images/1_2_9.webp)
+![進入終端](./images/1_2_9.webp)
 
-1.  **更新系统软件包**
+1.  **更新系統軟體包**
 
-    在终端输入下面指令：
+    在終端輸入下面指令：
 
     ```bash
     sudo apt update
     sudo apt upgrade -y
     ```
 
-2.  **安装Miniconda**
+2.  **安裝Miniconda**
 
     ```bash
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
     bash ~/miniconda.sh
     ```
 
-    - 按 Enter 阅读许可协议
-    - 输入 `yes` 同意协议
-    - 安装路径提示时直接按 Enter（使用默认路径 /home/ubuntu/miniconda3）
-    - 是否初始化Miniconda：输入 `yes` 将Miniconda添加到您的PATH环境变量中。
+    - 按 Enter 閱讀許可協議
+    - 輸入 `yes` 同意協議
+    - 安裝路徑提示時直接按 Enter（使用預設路徑 /home/ubuntu/miniconda3）
+    - 是否初始化Miniconda：輸入 `yes` 將Miniconda新增到您的PATH環境變數中。
 
     ```bash
     source ~/.bashrc
     conda --version
     ```
 
-    如果显示版本号，说明安装成功。
+    如果顯示版本號，說明安裝成功。
 
 ### 2.3 API配置
 
-1.  使用 `vim` 编辑器打开你的 shell 配置文件。
+1.  使用 `vim` 編輯器開啟你的 shell 配置檔案。
 
     ```bash
     vim ~/.bashrc
     ```
 
-2.  输入 `i` 进入编辑模式，在文件末尾添加以下行，将 `[你的大模型 API 密钥]` 替换为你自己的密钥：
+2.  輸入 `i` 進入編輯模式，在檔案末尾新增以下行，將 `[你的大模型 API 金鑰]` 替換為你自己的金鑰：
 
     ```bash
-    export DEEPSEEK_API_KEY=[你的大模型 API 密钥]
+    export DEEPSEEK_API_KEY=[你的大模型 API 金鑰]
     ```
 
-    如果选择的是 `AIHubmix` 平台，为了增加辨识度也可以使用：
+    如果選擇的是 `AIHubmix` 平臺，為了增加辨識度也可以使用：
 
     ```bash
-    export AIHUBMIX_API_KEY=[你的大模型 API 密钥]
+    export AIHUBMIX_API_KEY=[你的大模型 API 金鑰]
     ```
 
-    > 不要带 `[]`
+    > 不要帶 `[]`
 
-3.  保存并退出 在 vim 中，按 Esc 键进入命令模式，然后输入 `:wq` 并按 Enter 键保存文件并退出。
+3.  儲存並退出 在 vim 中，按 Esc 鍵進入命令模式，然後輸入 `:wq` 並按 Enter 鍵儲存檔案並退出。
 
-4.  使配置生效 执行以下命令来立即加载更新后的配置，让环境变量生效：
+4.  使配置生效 執行以下命令來立即載入更新後的配置，讓環境變數生效：
 
     ```bash
     source ~/.bashrc
     ```
 
-### 2.4 创建并激活虚拟环境
+### 2.4 建立並啟用虛擬環境
 
-1.  **创建虚拟环境**
+1.  **建立虛擬環境**
 
     ```bash
     conda create --name all-in-rag python=3.12.7
     ```
 
-    出现选项直接回车即可。
+    出現選項直接回車即可。
 
-2.  **激活虚拟环境**
+2.  **啟用虛擬環境**
 
-    使用以下命令激活虚拟环境：
+    使用以下命令啟用虛擬環境：
 
     ```bash
     conda activate all-in-rag
     ```
 
-3.  **依赖安装**
-    如果严格安装上述流程当前应该在项目根目录，进入code目录安装依赖库
+3.  **依賴安裝**
+    如果嚴格安裝上述流程當前應該在專案根目錄，進入code目錄安裝依賴庫
 
     ```bash
     cd code
     pip install -r requirements.txt
     ```
 
-    > 如果出现关于grpcio的版本错误无需在意。
+    > 如果出現關於grpcio的版本錯誤無需在意。
 
-## 三、Cloud Studio 环境配置（国内环境推荐）
+## 三、Cloud Studio 環境配置（國內環境推薦）
 
-Cloud Studio 是腾讯云推出的一款基于浏览器的集成开发环境（IDE）。支持CPU与GPU的访问。
+Cloud Studio 是騰訊雲推出的一款基於瀏覽器的整合開發環境（IDE）。支援CPU與GPU的訪問。
 
-> 听说一个月是50个小时的免费额度🤔
+> 聽說一個月是50個小時的免費額度🤔
 
-### 3.1 应用创建
+### 3.1 應用建立
 
-1.  **访问 Cloud Studio**
-    打开浏览器，访问 [Cloud Studio](https://cloudstudio.net/)。
+1.  **訪問 Cloud Studio**
+    開啟瀏覽器，訪問 [Cloud Studio](https://cloudstudio.net/)。
 
-2.  **登录或注册账号**
-    点击页面右上角的 `注册登录` 按钮，使用微信等方式完成登录。
+2.  **登入或註冊賬號**
+    點選頁面右上角的 `註冊登入` 按鈕，使用微信等方式完成登入。
 
-3.  **创建应用**
-    在页面上方的导航栏中找到并点击 `创建应用`。选择 `从 Git 仓库导入` ，在项目地址栏输入 `https://github.com/datawhalechina/all-in-rag.git` 后回车，将会自动为你创建标题和描述。
+3.  **建立應用**
+    在頁面上方的導航欄中找到並點選 `建立應用`。選擇 `從 Git 倉庫匯入` ，在專案位址列輸入 `https://github.com/datawhalechina/all-in-rag.git` 後回車，將會自動為你建立標題和描述。
 
-    ![创建应用](./images/1_2_10.webp)
+    ![建立應用](./images/1_2_10.webp)
 
-    > 注意描述中不要包含网址
+    > 注意描述中不要包含網址
 
-4.  **再次进入**
-    后续在[应用管理页面](https://cloudstudio.net/my-app)找到之前创建的应用，点击后选择右上角编写代码即可再次进入。
+4.  **再次進入**
+    後續在[應用管理頁面](https://cloudstudio.net/my-app)找到之前建立的應用，點選後選擇右上角編寫程式碼即可再次進入。
 
-    ![再次进入应用](./images/1_2_11.webp)
+    ![再次進入應用](./images/1_2_11.webp)
 
-### 3.2 python环境配置
+### 3.2 python環境配置
 
-进入 IDE 后先选择右侧终端
+進入 IDE 後先選擇右側終端
 
-![进入终端](./images/1_2_12.webp)
+![進入終端](./images/1_2_12.webp)
 
-1.  **更新系统软件包**
+1.  **更新系統軟體包**
 
-    在终端输入下面指令：
+    在終端輸入下面指令：
 
     ```bash
     sudo apt update
     sudo apt upgrade -y
     ```
 
-2.  **切换普通用户**
+2.  **切換普通使用者**
 
     ```bash
     su ubuntu
     ```
 
-3.  **安装Miniconda**
+3.  **安裝Miniconda**
 
     ```bash
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
     bash ~/miniconda.sh
     ```
 
-    - 按 Enter 阅读许可协议
-    - 输入 `yes` 同意协议
-    - 安装路径提示时直接按 Enter（使用默认路径 /home/ubuntu/miniconda3）
-    - 是否初始化Miniconda：输入 `yes` 将Miniconda添加到您的PATH环境变量中。
+    - 按 Enter 閱讀許可協議
+    - 輸入 `yes` 同意協議
+    - 安裝路徑提示時直接按 Enter（使用預設路徑 /home/ubuntu/miniconda3）
+    - 是否初始化Miniconda：輸入 `yes` 將Miniconda新增到您的PATH環境變數中。
 
     ```bash
     source ~/.bashrc
     conda --version
     ```
 
-    如果显示版本号，说明安装成功。
+    如果顯示版本號，說明安裝成功。
 
 ### 3.3 API配置
 
-1.  使用 `vim` 编辑器打开你的 shell 配置文件。
+1.  使用 `vim` 編輯器開啟你的 shell 配置檔案。
 
     ```bash
     vim ~/.bashrc
     ```
 
-2.  输入 `i` 进入编辑模式，在文件末尾添加以下行，将 `[你的大模型 API 密钥]` 替换为你自己的密钥：
+2.  輸入 `i` 進入編輯模式，在檔案末尾新增以下行，將 `[你的大模型 API 金鑰]` 替換為你自己的金鑰：
 
     ```bash
-    export DEEPSEEK_API_KEY=[你的大模型 API 密钥]
+    export DEEPSEEK_API_KEY=[你的大模型 API 金鑰]
     ```
 
-    如果选择的是 `AIHubmix` 平台，为了增加辨识度也可以使用：
+    如果選擇的是 `AIHubmix` 平臺，為了增加辨識度也可以使用：
 
     ```bash
-    export AIHUBMIX_API_KEY=[你的大模型 API 密钥]
+    export AIHUBMIX_API_KEY=[你的大模型 API 金鑰]
     ```
 
-    > 不要带 `[]`
+    > 不要帶 `[]`
 
-3.  保存并退出 在 vim 中，按 Esc 键进入命令模式，然后输入 `:wq` 并按 Enter 键保存文件并退出。
+3.  儲存並退出 在 vim 中，按 Esc 鍵進入命令模式，然後輸入 `:wq` 並按 Enter 鍵儲存檔案並退出。
 
-4.  使配置生效 执行以下命令来立即加载更新后的配置，让环境变量生效：
+4.  使配置生效 執行以下命令來立即載入更新後的配置，讓環境變數生效：
 
     ```bash
     source ~/.bashrc
     ```
 
-### 3.4 创建并激活虚拟环境
+### 3.4 建立並啟用虛擬環境
 
-1.  **创建虚拟环境**
+1.  **建立虛擬環境**
 
     ```bash
     conda create --name all-in-rag python=3.12.7
     ```
 
-    出现选项直接回车即可。
+    出現選項直接回車即可。
 
-2.  **配置文件权限**
+2.  **配置檔案許可權**
 
     ```bash
     sudo chown -R ubuntu:ubuntu code models
     ```
 
-3.  **激活虚拟环境**
+3.  **啟用虛擬環境**
 
-    使用以下命令激活虚拟环境：
+    使用以下命令啟用虛擬環境：
 
     ```bash
     conda activate all-in-rag
     ```
 
-4.  **依赖安装**
-    如果严格安装上述流程当前应该在项目根目录，进入code目录安装依赖库
+4.  **依賴安裝**
+    如果嚴格安裝上述流程當前應該在專案根目錄，進入code目錄安裝依賴庫
 
     ```bash
     cd code
     pip install -r requirements.txt
     ```
 
-    > 如果出现关于grpcio的版本错误无需在意。
+    > 如果出現關於grpcio的版本錯誤無需在意。
 
-## 四、windows环境配置（使用Cloud Studio 或 Codespaces 可跳过此步骤）
+## 四、windows環境配置（使用Cloud Studio 或 Codespaces 可跳過此步驟）
 
 ### 4.1 API配置
 
-1.  右键点击 “计算机” 或 “此电脑”，然后点击 “属性”。
+1.  右鍵點選 “計算機” 或 “此電腦”，然後點選 “屬性”。
 
-2.  在左侧菜单中，点击 “高级系统设置”。
+2.  在左側選單中，點選 “高階系統設定”。
 
-3.  在 “系统属性” 对话框中，点击 “高级” 选项卡，然后点击下方的 “环境变量” 按钮。
+3.  在 “系統屬性” 對話方塊中，點選 “高階” 選項卡，然後點選下方的 “環境變數” 按鈕。
 
-    ![高级系统设置](./images/1_2_13.webp)
+    ![高階系統設定](./images/1_2_13.webp)
 
-4.  在 “环境变量” 对话框中，点击 “新建”（在 “用户变量” 部分下），然后输入以下信息：
-    - 变量名：DEEPSEEK_API_KEY
-    - 变量值：[你的 Deepseek API 密钥]
+4.  在 “環境變數” 對話方塊中，點選 “新建”（在 “使用者變數” 部分下），然後輸入以下資訊：
+    - 變數名：DEEPSEEK_API_KEY
+    - 變數值：[你的 Deepseek API 金鑰]
 
-    ![高级系统设置](./images/1_2_14.webp)
+    ![高階系統設定](./images/1_2_14.webp)
 
-### 4.2 安装Miniconda
+### 4.2 安裝Miniconda
 
-1.  **下载安装程序**
+1.  **下載安裝程式**
 
-    优先推荐访问[清华大学开源软件镜像站](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/)，以获得更快的下载速度。根据你的系统选择最新的 `.exe` 版本下载。
+    優先推薦訪問[清華大學開源軟體映象站](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/)，以獲得更快的下載速度。根據你的系統選擇最新的 `.exe` 版本下載。
 
-    ![选择Miniconda版本](images/1_2_15.webp)
+    ![選擇Miniconda版本](images/1_2_15.webp)
 
-    你也可以从 [Miniconda 官方网站](https://docs.conda.io/en/latest/miniconda.html)下载。
+    你也可以從 [Miniconda 官方網站](https://docs.conda.io/en/latest/miniconda.html)下載。
 
-2.  **运行安装向导**
+2.  **執行安裝嚮導**
 
-    下载完成后，双击 `.exe` 文件启动安装。按照向导提示操作：
+    下載完成後，雙擊 `.exe` 檔案啟動安裝。按照嚮導提示操作：
 
-    *   **Welcome**: 点击 `Next`。
+    *   **Welcome**: 點選 `Next`。
 
         ![Welcome](./images/1_2_16.webp)
 
-    *   **License Agreement**: 点击 `I Agree`。
+    *   **License Agreement**: 點選 `I Agree`。
 
         ![License Agreement](./images/1_2_17.webp)
 
-    *   **Installation Type**: 选择 `Just Me`，点击 `Next`。
+    *   **Installation Type**: 選擇 `Just Me`，點選 `Next`。
 
         ![Installation Type](./images/1_2_18.webp)
 
-    *   **Choose Install Location**: 建议保持默认路径，或选择一个不含中文和空格的路径。点击 `Next`。
+    *   **Choose Install Location**: 建議保持預設路徑，或選擇一個不含中文和空格的路徑。點選 `Next`。
 
         ![Install Location](./images/1_2_19.webp)
 
-    *   **Advanced Installation Options**: **请不要勾选** “Add Miniconda3 to my PATH environment variable”。我们将稍后手动配置环境变量。点击 `Install`。
+    *   **Advanced Installation Options**: **請不要勾選** “Add Miniconda3 to my PATH environment variable”。我們將稍後手動配置環境變數。點選 `Install`。
 
         ![Advanced Options](./images/1_2_20.webp)
 
-    *   **Installation Complete**: 安装完成后，点击 `Next`，然后取消勾选 “Learn more” 并点击 `Finish` 完成安装。
+    *   **Installation Complete**: 安裝完成後，點選 `Next`，然後取消勾選 “Learn more” 並點選 `Finish` 完成安裝。
 
-3.  **手动配置环境变量**
+3.  **手動配置環境變數**
 
-    为了能在任意终端窗口使用 `conda` 命令，需要手动配置环境变量。
+    為了能在任意終端視窗使用 `conda` 命令，需要手動配置環境變數。
 
-    *   在Windows搜索栏中搜索“编辑系统环境变量”并打开。
+    *   在Windows搜尋欄中搜尋“編輯系統環境變數”並開啟。
 
-        ![编辑系统环境变量](./images/1_2_21.webp)
+        ![編輯系統環境變數](./images/1_2_21.webp)
 
-    *   在“系统属性”窗口中，点击“环境变量”。
+    *   在“系統屬性”視窗中，點選“環境變數”。
 
-        ![环境变量按钮](./images/1_2_22.webp)
+        ![環境變數按鈕](./images/1_2_22.webp)
 
-    *   在“环境变量”窗口中，找到“系统变量”下的 `Path` 变量，选中并点击“编辑”。
+    *   在“環境變數”視窗中，找到“系統變數”下的 `Path` 變數，選中並點選“編輯”。
 
-        ![编辑Path变量](./images/1_2_23.webp)
+        ![編輯Path變數](./images/1_2_23.webp)
 
-    *   在“编辑环境变量”窗口中，新建三个路径，将它们指向你 Miniconda 的安装目录下的相应文件夹。如果你的安装路径是 `D:\Miniconda3`，则需要添加：
+    *   在“編輯環境變數”視窗中，新建三個路徑，將它們指向你 Miniconda 的安裝目錄下的相應資料夾。如果你的安裝路徑是 `D:\Miniconda3`，則需要新增：
         ```
         D:\Miniconda3
         D:\Miniconda3\Scripts
         D:\Miniconda3\Library\bin
         ```
-        ![添加路径](./images/1_2_24.webp)
+        ![新增路徑](./images/1_2_24.webp)
         
-    *   完成后，一路点击“确定”保存更改。
+    *   完成後，一路點選“確定”儲存更改。
 
-### 4.3 配置 Conda 镜像源
+### 4.3 配置 Conda 映象源
 
-为了加快后续使用 `conda` 安装包的速度，强烈建议配置国内镜像源。打开一个新的终端或 Anaconda Prompt，运行以下命令：
+為了加快後續使用 `conda` 安裝包的速度，強烈建議配置國內映象源。開啟一個新的終端或 Anaconda Prompt，執行以下命令：
 
 ```bash
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
@@ -406,80 +406,80 @@ conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/f
 conda config --set show_channel_urls yes
 ```
 
-配置完成后，可以通过 `conda config --show channels` 命令查看已添加的源。
+配置完成後，可以透過 `conda config --show channels` 命令檢視已新增的源。
 
-## 五、项目代码拉取（使用Cloud Studio 或 Codespaces 可跳过此步骤）
+## 五、專案程式碼拉取（使用Cloud Studio 或 Codespaces 可跳過此步驟）
 
-### 5.1 安装 Git
+### 5.1 安裝 Git
 
-如果你尚未安装 Git，请按照以下步骤安装。
+如果你尚未安裝 Git，請按照以下步驟安裝。
 
-* **Windows 系统**：访问[Git 官方网站](https://git-scm.com/download/win)，下载并运行安装程序，按照默认设置完成安装。
-* **macOS 系统**：打开终端，输入以下命令安装 Git：
+* **Windows 系統**：訪問[Git 官方網站](https://git-scm.com/download/win)，下載並執行安裝程式，按照預設設定完成安裝。
+* **macOS 系統**：開啟終端，輸入以下命令安裝 Git：
 
   ```bash
   brew install git
   ```
-* **Linux 系统（以 Ubuntu 为例）**：打开终端，输入以下命令安装 Git：
+* **Linux 系統（以 Ubuntu 為例）**：開啟終端，輸入以下命令安裝 Git：
 
   ```bash
   sudo apt-get update
   sudo apt-get install git
   ```
 
-安装完成后，验证 Git 是否安装成功，输入以下命令：
+安裝完成後，驗證 Git 是否安裝成功，輸入以下命令：
 
 ```bash
 git --version
 ```
 
-如果成功，会显示 Git 的版本号。
+如果成功，會顯示 Git 的版本號。
 
-### 5.2 克隆项目代码
+### 5.2 克隆專案程式碼
 
-1. **选择存放项目的目录**
-   打开终端（或 Windows 中的 Git Bash），导航到你想存放项目的目录：
+1. **選擇存放專案的目錄**
+   開啟終端（或 Windows 中的 Git Bash），導航到你想存放專案的目錄：
 
    ```bash
-   cd [你希望存放项目的路径]
+   cd [你希望存放專案的路徑]
    ```
 
-2. **克隆仓库**
-   使用以下命令拉取 `all-in-rag` 仓库：
+2. **克隆倉庫**
+   使用以下命令拉取 `all-in-rag` 倉庫：
 
    ```bash
    git clone https://github.com/datawhalechina/all-in-rag.git
    ```
 
-   等待下载完成，项目代码将存放在当前目录下的 `all-in-rag` 文件夹中。
+   等待下載完成，專案程式碼將存放在當前目錄下的 `all-in-rag` 資料夾中。
 
-3. **进入项目目录**
-   拉取代码后，进入项目目录：
+3. **進入專案目錄**
+   拉取程式碼後，進入專案目錄：
 
    ```bash
    cd all-in-rag
    ```
 
-### 5.3 创建并激活虚拟环境
+### 5.3 建立並啟用虛擬環境
 
-在项目目录下，推荐使用前面配置好的 Miniconda 来创建 Python 虚拟环境。
+在專案目錄下，推薦使用前面配置好的 Miniconda 來建立 Python 虛擬環境。
 
-1. **创建虚拟环境**
+1. **建立虛擬環境**
 
    ```bash
    conda create --name all-in-rag python=3.12.7
    ```
 
-2. **激活虚拟环境**
+2. **啟用虛擬環境**
 
-   所有系统统一使用以下命令激活虚拟环境：
+   所有系統統一使用以下命令啟用虛擬環境：
 
    ```bash
    conda activate all-in-rag
    ```
 
-3.  **依赖安装**
-    如果严格安装上述流程当前应该在项目根目录，进入code目录安装依赖库
+3.  **依賴安裝**
+    如果嚴格安裝上述流程當前應該在專案根目錄，進入code目錄安裝依賴庫
 
     ```bash
     cd code

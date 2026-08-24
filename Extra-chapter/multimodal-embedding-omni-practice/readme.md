@@ -1,98 +1,98 @@
-# 多模态 Omni Embedding 实践（Jina v5-omni）
+# 多模態 Omni Embedding 實踐（Jina v5-omni）
 
-## 一、这个专题要解决什么问题
+## 一、這個專題要解決什麼問題
 
-主线教程（`docs/chapter3/07_multimodal_embedding.md`）已经讲清楚了 CLIP 双编码器和 BGE-Visualized 图文检索的基础范式。本专题接着往前一步，验证下一代"统一多模态语义空间"的实际效果：
+主線教程（`docs/chapter3/07_multimodal_embedding.md`）已經講清楚了 CLIP 雙編碼器和 BGE-Visualized 圖文檢索的基礎正規化。本專題接著往前一步，驗證下一代"統一多模態語義空間"的實際效果：
 
-> **文本、图像、音频、视频、PDF 能不能被映射到同一个向量空间里，并按语义远近排序？**
+> **文字、影象、音訊、影片、PDF 能不能被對映到同一個向量空間裡，並按語義遠近排序？**
 
-本专题只做嵌入与相似度层面的验证，不做端到端 RAG pipeline。
+本專題只做嵌入與相似度層面的驗證，不做端到端 RAG pipeline。
 
-**验收标准**：脚本跑通，输出一组相似度矩阵，并且你能说出"为什么海滩图像与海滩描述文字的相似度，高于与无关音频的相似度"。
+**驗收標準**：指令碼跑通，輸出一組相似度矩陣，並且你能說出"為什麼海灘影象與海灘描述文字的相似度，高於與無關音訊的相似度"。
 
-**本专题不覆盖的内容**：跨模态检索的生产调优、大规模向量库接入、不同模型之间的性能对比。
+**本專題不覆蓋的內容**：跨模態檢索的生產調優、大規模向量庫接入、不同模型之間的效能對比。
 
 ---
 
-## 二、技术演进：从 CLIP 到 v5-omni
+## 二、技術演進：從 CLIP 到 v5-omni
 
-理解本专题的实验前，有必要先看一眼这条技术路线是怎么走过来的：
+理解本專題的實驗前，有必要先看一眼這條技術路線是怎麼走過來的：
 
-| 阶段 | 模型代表 | 支持模态 | 核心思路 |
+| 階段 | 模型代表 | 支援模態 | 核心思路 |
 |------|----------|----------|----------|
-| 第一代 | CLIP | 图 + 文 | 双编码器 + 对比学习，对齐图文向量空间 |
-| 第二代 | BGE-Visualized-M3 | 图 + 文 | 在强文本底座上接入 patch token，联合建模 |
-| 第三代 | Jina v5-omni | 图 + 文 + 音频 + 视频 + PDF | GELATO：冻结文本主干，仅训练轻量投影层 |
+| 第一代 | CLIP | 圖 + 文 | 雙編碼器 + 對比學習，對齊圖文向量空間 |
+| 第二代 | BGE-Visualized-M3 | 圖 + 文 | 在強文字底座上接入 patch token，聯合建模 |
+| 第三代 | Jina v5-omni | 圖 + 文 + 音訊 + 影片 + PDF | GELATO：凍結文字主幹，僅訓練輕量投影層 |
 
-关键变化是：v5-omni 不需要重训整个模型就能扩展到新模态，而且已有文本向量的系统升级后**文本路径行为不变**，可以直接接入不需要重建全量索引。
+關鍵變化是：v5-omni 不需要重訓整個模型就能擴充套件到新模態，而且已有文字向量的系統升級後**文字路徑行為不變**，可以直接接入不需要重建全量索引。
 
 ---
 
-## 三、GELATO 设计与向量空间
+## 三、GELATO 設計與向量空間
 
 ### 3.1 核心思路
 
-GELATO（Geometry-preserving Embeddings via Locked Aligned TOwers）的核心是"冻结主干、只训练连接"：
+GELATO（Geometry-preserving Embeddings via Locked Aligned TOwers）的核心是"凍結主幹、只訓練連線"：
 
-- 文本主干（jina-embeddings-v5-text-nano）和非文本编码器均**冻结**
-- 只训练投影层（`fc_vision_2`、`fc_audio`）和模态分隔符 token embedding
-- 可训练参数约占总权重 **0.35%**
-- 文本输入的 embedding 行为与原文本底座完全一致
+- 文字主幹（jina-embeddings-v5-text-nano）和非文字編碼器均**凍結**
+- 只訓練投影層（`fc_vision_2`、`fc_audio`）和模態分隔符 token embedding
+- 可訓練引數約佔總權重 **0.35%**
+- 文字輸入的 embedding 行為與原文字底座完全一致
 
-这套设计让"支持新模态"和"保持已有文本几何稳定"可以在同一个模型里同时实现。
+這套設計讓"支援新模態"和"保持已有文字幾何穩定"可以在同一個模型裡同時實現。
 
-### 3.2 nano 版模型组成
+### 3.2 nano 版模型組成
 
-| 组件 | 来源 | 参数量（加载视觉时） |
+| 元件 | 來源 | 引數量（載入視覺時） |
 |------|------|------|
-| 文本主干 | jina-embeddings-v5-text-nano | 0.24B |
-| 视觉编码器 | SigLIP2 Base，来自 Qwen3.5-0.8B | 合计约 354M |
-| 音频编码器 | Whisper-large-v3，来自 Qwen2.5-Omni-7B | 合计约 916M |
-| 输出维度 | — | 768 维 |
+| 文字主幹 | jina-embeddings-v5-text-nano | 0.24B |
+| 視覺編碼器 | SigLIP2 Base，來自 Qwen3.5-0.8B | 合計約 354M |
+| 音訊編碼器 | Whisper-large-v3，來自 Qwen2.5-Omni-7B | 合計約 916M |
+| 輸出維度 | — | 768 維 |
 
-加载时通过 `modality` 参数控制实例化哪些编码器塔，不需要的模态不会加载，节省显存。
+載入時透過 `modality` 引數控制例項化哪些編碼器塔，不需要的模態不會載入，節省視訊記憶體。
 
-### 3.3 任务适配器
+### 3.3 任務介面卡
 
-模型内置 4 个任务适配器（LoRA + 任务专属投影权重），推理时通过 `default_task` 选择：
+模型內建 4 個任務介面卡（LoRA + 任務專屬投影權重），推理時透過 `default_task` 選擇：
 
-- `retrieval`：信息检索
-- `text-matching`：语义相似度
-- `clustering`：聚类
-- `classification`：分类
+- `retrieval`：資訊檢索
+- `text-matching`：語義相似度
+- `clustering`：聚類
+- `classification`：分類
 
-本专题使用 `retrieval` 任务。
+本專題使用 `retrieval` 任務。
 
-### 3.4 nano 与 small 的工程选型
+### 3.4 nano 與 small 的工程選型
 
-两个版本均支持全部模态，差别主要体现在参数规模和 embedding 维度上。工程上通常先用 nano 跑通，再根据召回评测结果决定是否升级到 small。
+兩個版本均支援全部模態，差別主要體現在引數規模和 embedding 維度上。工程上通常先用 nano 跑通，再根據召回評測結果決定是否升級到 small。
 
 ---
 
-## 四、实验场景
+## 四、實驗場景
 
-### 4.1 场景设定
+### 4.1 場景設定
 
-假设你在做一个**海边内容检索**演示：语料库里有不同语言的文字描述、两张实拍图片、一段音频和一段视频，以及一份与海滩无关的学术论文摘录（作为"负样本"参照）。
+假設你在做一個**海邊內容檢索**演示：語料庫裡有不同語言的文字描述、兩張實拍圖片、一段音訊和一段影片，以及一份與海灘無關的學術論文摘錄（作為"負樣本"參照）。
 
-目标是：用一个关于"海滩夕阳"的文本 query，验证不同模态的内容能否按语义远近正确排序。
+目標是：用一個關於"海灘夕陽"的文字 query，驗證不同模態的內容能否按語義遠近正確排序。
 
-### 4.2 data/ 文件说明
+### 4.2 data/ 檔案說明
 
 ```
 data/
-├── beach1.jpg                        # 海滩夕阳实拍照片（约 50 KB）
-├── beach2.jpg                        # 另一张海滩照片（约 78 KB）
-├── example-audio-clip.wav            # 音频片段（约 4.6 MB）
-├── example-video-clip.mp4            # 视频片段（约 968 KB）
-└── paper_2506.18902_excerpt_2pages.pdf  # 论文摘录（与海滩无关，约 117 KB）
+├── beach1.jpg                        # 海灘夕陽實拍照片（約 50 KB）
+├── beach2.jpg                        # 另一張海灘照片（約 78 KB）
+├── example-audio-clip.wav            # 音訊片段（約 4.6 MB）
+├── example-video-clip.mp4            # 影片片段（約 968 KB）
+└── paper_2506.18902_excerpt_2pages.pdf  # 論文摘錄（與海灘無關，約 117 KB）
 ```
 
-### 4.3 三轮 query 设计
+### 4.3 三輪 query 設計
 
-脚本内置 3 轮语义相近但表述各异的 query，用于观察向量几何的稳定性：
+指令碼內建 3 輪語義相近但表述各異的 query，用於觀察向量幾何的穩定性：
 
-| 轮次 | query 文本 |
+| 輪次 | query 文字 |
 |------|-----------|
 | R1 | `sunset on the beach` |
 | R2 | `waves and sunset on coast` |
@@ -100,16 +100,16 @@ data/
 
 ---
 
-## 五、目录结构
+## 五、目錄結構
 
 ```
 Extra-chapter/multimodal-embedding-omni-practice/
 ├── readme.md                         # 本文
 ├── images/
-│   └── 3_2_3.png                     # v5-omni 架构图
+│   └── 3_2_3.png                     # v5-omni 架構圖
 ├── code/
-│   ├── 08_jina_embedding_omni.py     # 可运行脚本
-│   └── pyproject.toml                # 依赖配置（uv）
+│   ├── 08_jina_embedding_omni.py     # 可執行指令碼
+│   └── pyproject.toml                # 依賴配置（uv）
 └── data/
     ├── beach1.jpg
     ├── beach2.jpg
@@ -120,20 +120,20 @@ Extra-chapter/multimodal-embedding-omni-practice/
 
 ---
 
-## 六、最小实现骨架
+## 六、最小實現骨架
 
-下面是脚本主干的伪代码，对应 `code/08_jina_embedding_omni.py` 的执行顺序：
+下面是指令碼主幹的虛擬碼，對應 `code/08_jina_embedding_omni.py` 的執行順序：
 
 ```python
-# 1) 加载模型（本地优先，否则从 HF 下载）
+# 1) 載入模型（本地優先，否則從 HF 下載）
 raw_model = AutoModel.from_pretrained(model_path, default_task="retrieval", modality="vision")
 processor = AutoProcessor.from_pretrained(model_path)
 st_model  = SentenceTransformer(model_path, model_kwargs={"default_task": "retrieval"})
-# raw_model + processor 用于文本和图像编码
-# st_model 用于音频、视频、PDF 编码（自动按扩展名识别模态）
+# raw_model + processor 用於文字和影象編碼
+# st_model 用於音訊、影片、PDF 編碼（自動按副檔名識別模態）
 
-# 2) 构建语料库（corpus，9 个向量）
-docs  = raw_model.embed(processor(text=[4 种语言描述], padding=True, ...))
+# 2) 構建語料庫（corpus，9 個向量）
+docs  = raw_model.embed(processor(text=[4 種語言描述], padding=True, ...))
 img1  = raw_model.embed(processor(images=[beach1.jpg], text="<image>", ...))
 img2  = raw_model.embed(processor(images=[beach2.jpg], text="<image>", ...))
 audio = st_model.encode("example-audio-clip.wav")
@@ -141,32 +141,32 @@ video = st_model.encode("example-video-clip.mp4")
 pdf   = st_model.encode("paper_2506.18902_excerpt_2pages.pdf")
 corpus = stack([docs×4, img1, img2, audio, video, pdf])   # shape (9, 768)
 
-# 3) 对每轮 query 编码并计算相似度矩阵
+# 3) 對每輪 query 編碼並計算相似度矩陣
 for name, q in [("R1", ...), ("R2", ...), ("R3", ...)]:
     qv     = raw_model.embed(processor(text=f"Query: {q}", ...))
     fusion = raw_model.embed(processor(images=[beach1.jpg], text=q, ...))
-    # fusion = 同一张图 + 当前 query 文本，融合为单一向量
+    # fusion = 同一張圖 + 當前 query 文字，融合為單一向量
     vectors = stack([qv, corpus, fusion])   # shape (11, 768)
     sim = cosine_similarity(vectors)         # shape (11, 11)
     print(sim)
 
-# 4) 对比三轮 query 之间的向量方向对齐度
+# 4) 對比三輪 query 之間的向量方向對齊度
 aligned = [cosine(R1[i], R2[i]) for i in range(11)]
 ```
 
-关键设计点：
+關鍵設計點：
 
-- 文档编码使用 `"Document: "` 前缀，query 使用 `"Query: "` 前缀（retrieval 任务的非对称路由）
-- `fusion` 向量把图像内容和 query 文字合并成一个向量，通常比纯文字 query 相似度更高
-- `st_model.encode()` 传入文件路径即可，SentenceTransformers >= 5.4 会按扩展名自动选择音频/视频/PDF 编解码路径
+- 文件編碼使用 `"Document: "` 字首，query 使用 `"Query: "` 字首（retrieval 任務的非對稱路由）
+- `fusion` 向量把影象內容和 query 文字合併成一個向量，通常比純文字 query 相似度更高
+- `st_model.encode()` 傳入檔案路徑即可，SentenceTransformers >= 5.4 會按副檔名自動選擇音訊/影片/PDF 編解碼路徑
 
 ---
 
-## 七、环境准备与运行
+## 七、環境準備與執行
 
-### 7.1 依赖安装
+### 7.1 依賴安裝
 
-> ⚠️ 处理音频、视频、PDF 需要的依赖比纯文本场景多。`pyproject.toml` 已配置好所有必要包，直接用 `uv sync` 安装即可。
+> ⚠️ 處理音訊、影片、PDF 需要的依賴比純文字場景多。`pyproject.toml` 已配置好所有必要包，直接用 `uv sync` 安裝即可。
 
 ```bash
 cd Extra-chapter/multimodal-embedding-omni-practice/code
@@ -175,91 +175,91 @@ source .venv/bin/activate
 uv sync
 ```
 
-主要依赖说明：
+主要依賴說明：
 
 | 包 | 用途 |
 |----|------|
-| `sentence-transformers>=5.4.0` | 多模态 encode 支持（5.4 起才有） |
-| `av>=17.0.0` | 视频帧提取 |
-| `librosa>=0.11.0` + `soundfile` | 音频解码 |
-| `pypdf` + `pypdfium2` | PDF 解析与渲染 |
-| `pillow` + `torchvision` | 图像处理 |
+| `sentence-transformers>=5.4.0` | 多模態 encode 支援（5.4 起才有） |
+| `av>=17.0.0` | 影片幀提取 |
+| `librosa>=0.11.0` + `soundfile` | 音訊解碼 |
+| `pypdf` + `pypdfium2` | PDF 解析與渲染 |
+| `pillow` + `torchvision` | 影象處理 |
 
-**模型说明**：脚本优先使用本地路径 `models/jina-embeddings-v5-omni-nano`（相对仓库根目录），若不存在则自动从 HuggingFace 下载 `jinaai/jina-embeddings-v5-omni-nano`。国内网络建议提前手动下载。
+**模型說明**：指令碼優先使用本地路徑 `models/jina-embeddings-v5-omni-nano`（相對倉庫根目錄），若不存在則自動從 HuggingFace 下載 `jinaai/jina-embeddings-v5-omni-nano`。國內網路建議提前手動下載。
 
-### 7.2 执行脚本
+### 7.2 執行指令碼
 
 ```bash
-# 从 code/ 目录运行（路径解析基于脚本位置，不依赖 shell 工作目录）
+# 從 code/ 目錄執行（路徑解析基於指令碼位置，不依賴 shell 工作目錄）
 python 08_jina_embedding_omni.py
 ```
 
-脚本启动时会打印 `model_source=...` 确认使用的是本地还是远程模型。加载过程会显示进度条（`Loading weights`），属正常现象。
+指令碼啟動時會列印 `model_source=...` 確認使用的是本地還是遠端模型。載入過程會顯示進度條（`Loading weights`），屬正常現象。
 
-> 💡 **transformers 警告**：启动时可能出现 `[transformers] torch_dtype is deprecated! Use dtype instead!` 这是 transformers 库内部版本迁移的提示，不影响结果，可忽略。
+> 💡 **transformers 警告**：啟動時可能出現 `[transformers] torch_dtype is deprecated! Use dtype instead!` 這是 transformers 庫內部版本遷移的提示，不影響結果，可忽略。
 
 ---
 
-## 八、结果解读（真实输出）
+## 八、結果解讀（真實輸出）
 
-### 8.1 向量布局
+### 8.1 向量佈局
 
-每一轮（R1/R2/R3）输出一个 shape=(11, 768) 的矩阵，11 个向量的排列固定如下：
+每一輪（R1/R2/R3）輸出一個 shape=(11, 768) 的矩陣，11 個向量的排列固定如下：
 
-| idx | 类型 | 内容 |
+| idx | 型別 | 內容 |
 |-----|------|------|
-| 0 | query | 当前轮次的文字 query（如 "Query: sunset on the beach"） |
+| 0 | query | 當前輪次的文字 query（如 "Query: sunset on the beach"） |
 | 1 | doc_en | "Document: A beautiful sunset over the beach" |
 | 2 | doc_fr | "Document: Un beau coucher de soleil sur la plage" |
-| 3 | doc_zh | "Document: 海滩上美丽的日落" |
+| 3 | doc_zh | "Document: 海灘上美麗的日落" |
 | 4 | doc_ja | "Document: 浜辺に沈む美しい夕日" |
 | 5 | img1 | beach1.jpg |
 | 6 | img2 | beach2.jpg |
 | 7 | audio | example-audio-clip.wav |
 | 8 | video | example-video-clip.mp4 |
 | 9 | pdf | paper_2506.18902_excerpt_2pages.pdf |
-| 10 | fusion | img1 + 当前 query 文字（图文融合向量） |
+| 10 | fusion | img1 + 當前 query 文字（圖文融合向量） |
 
-### 8.2 R1 相似度矩阵（真实输出）
+### 8.2 R1 相似度矩陣（真實輸出）
 
-以下是 R1（query: `sunset on the beach`）的真实运行结果中 **query 行**（第 0 行）的相似度值：
+以下是 R1（query: `sunset on the beach`）的真實執行結果中 **query 行**（第 0 行）的相似度值：
 
 ```
 R1 | shape=(11, 768)
 
 query 行 sim[0][j]：
 
-  idx  类型        相似度    说明
+  idx  型別        相似度    說明
   ---  --------  -------  ------------------------------------------
-   10  fusion     0.9159   ★★★ img1 + query 融合向量，远超纯文本 query
-    3  doc_zh     0.7372   ★★★ 中文描述（海滩上美丽的日落）
-    2  doc_fr     0.7200   ★★  法文描述（同义）
-    4  doc_ja     0.5841   ★★  日文描述（同义）
-    6  img2       0.5921   ★★  第二张海滩照片（跨模态）
-    5  img1       0.5836   ★★  第一张海滩照片（跨模态）
-    7  audio      0.1201   ★   音频，弱正相关
-    8  video      0.0632       视频，接近零
-    9  pdf       -0.0014       无关论文，接近零（符合预期）
-    1  doc_en    -0.0153   ⚠   英文描述（见下方说明）
+   10  fusion     0.9159   ★★★ img1 + query 融合向量，遠超純文字 query
+    3  doc_zh     0.7372   ★★★ 中文描述（海灘上美麗的日落）
+    2  doc_fr     0.7200   ★★  法文描述（同義）
+    4  doc_ja     0.5841   ★★  日文描述（同義）
+    6  img2       0.5921   ★★  第二張海灘照片（跨模態）
+    5  img1       0.5836   ★★  第一張海灘照片（跨模態）
+    7  audio      0.1201   ★   音訊，弱正相關
+    8  video      0.0632       影片，接近零
+    9  pdf       -0.0014       無關論文，接近零（符合預期）
+    1  doc_en    -0.0153   ⚠   英文描述（見下方說明）
 ```
 
-**观察一：图文融合 >> 纯文字 query**
+**觀察一：圖文融合 >> 純文字 query**
 
-`fusion`（0.9159）远高于纯文字 query 自身与语料的最高相似度（0.7372）。这印证了"图像 + 文字"联合输入可以更精准地表达检索意图。如果你的检索场景能提供示例图片，把它和 query 文字合并编码是一个值得尝试的方向。
+`fusion`（0.9159）遠高於純文字 query 自身與語料的最高相似度（0.7372）。這印證了"影象 + 文字"聯合輸入可以更精準地表達檢索意圖。如果你的檢索場景能提供示例圖片，把它和 query 文字合併編碼是一個值得嘗試的方向。
 
-**观察二：跨语言对齐工作良好**
+**觀察二：跨語言對齊工作良好**
 
-法文（0.72）、中文（0.7372）、日文（0.5841）的描述都与英文 query 有正相关，体现了模型的多语言能力。这些文本在彼此之间的相似度更高（法文 vs 中文：0.84，中文 vs 日文：0.80），说明同语义内容在向量空间中形成了稳定的语义簇。
+法文（0.72）、中文（0.7372）、日文（0.5841）的描述都與英文 query 有正相關，體現了模型的多語言能力。這些文字在彼此之間的相似度更高（法文 vs 中文：0.84，中文 vs 日文：0.80），說明同語義內容在向量空間中形成了穩定的語義簇。
 
-**观察三：图像跨模态相似度合理（约 0.58）**
+**觀察三：影象跨模態相似度合理（約 0.58）**
 
-两张海滩照片与文字 query 的相似度在 0.58 左右，明显低于同语义文本（0.72-0.74），但远高于音频（0.12）和视频（0.06）。图片之间的相似度很高（img1 vs img2：0.9167），说明模型能识别同一场景的不同拍摄。
+兩張海灘照片與文字 query 的相似度在 0.58 左右，明顯低於同語義文字（0.72-0.74），但遠高於音訊（0.12）和影片（0.06）。圖片之間的相似度很高（img1 vs img2：0.9167），說明模型能識別同一場景的不同拍攝。
 
-**观察四：音视频相似度分层**
+**觀察四：音影片相似度分層**
 
-音频（0.12）、视频（0.06）、PDF（≈0）依次递减，与"内容相关性"基本一致：音频可能含有海浪或环境音，视频画面内容与海滩相关，而论文与海滩完全无关。
+音訊（0.12）、影片（0.06）、PDF（≈0）依次遞減，與"內容相關性"基本一致：音訊可能含有海浪或環境音，影片畫面內容與海灘相關，而論文與海灘完全無關。
 
-### 8.3 多轮对齐分析（真实输出）
+### 8.3 多輪對齊分析（真實輸出）
 
 ```
 R1 -> R2
@@ -271,107 +271,107 @@ aligned=[0.6056 1.     1.     1.     1.     1.     1.     1.     1.     1.     0
 best_corpus_idx=3, score=0.7372
 ```
 
-**aligned** 数组中：
+**aligned** 陣列中：
 
-- 索引 1-9（语料库向量）的对齐值均为 **1.0**——语料库在每轮中重新编码，但输入不变，所以向量完全一致，属于预期行为。
-- 索引 0（query 向量）：R1 vs R2 = **0.7623**，R1 vs R3 = **0.6056**。这说明语义相近但表述不同的 query，在向量空间中的方向不完全相同，R3 的措辞与 R1 差别更大。
-- 索引 10（fusion 向量）：R1 vs R2 = **0.03**，R1 vs R3 = **0.30**。fusion 把图像与 query 文字合并，query 文字变化后 fusion 向量变化幅度更大——这说明 fusion 对文字语义的敏感度比纯文字 query 还要高。
+- 索引 1-9（語料庫向量）的對齊值均為 **1.0**——語料庫在每輪中重新編碼，但輸入不變，所以向量完全一致，屬於預期行為。
+- 索引 0（query 向量）：R1 vs R2 = **0.7623**，R1 vs R3 = **0.6056**。這說明語義相近但表述不同的 query，在向量空間中的方向不完全相同，R3 的措辭與 R1 差別更大。
+- 索引 10（fusion 向量）：R1 vs R2 = **0.03**，R1 vs R3 = **0.30**。fusion 把影象與 query 文字合併，query 文字變化後 fusion 向量變化幅度更大——這說明 fusion 對文字語義的敏感度比純文字 query 還要高。
 
-**best_corpus_idx=3** 在三轮中保持一致，指向 `doc_zh`（中文海滩描述），score=0.7372。
+**best_corpus_idx=3** 在三輪中保持一致，指向 `doc_zh`（中文海灘描述），score=0.7372。
 
-### 8.4 自检指引
+### 8.4 自檢指引
 
-> 💡 **如何判断结果是否正常？**
+> 💡 **如何判斷結果是否正常？**
 >
-> 正常结果应满足：
-> - `fusion` 相似度 > 所有纯文本 query 的相似度
-> - 同语义多语言文本的相似度 > 图像相似度 > 音视频相似度
-> - 无关 PDF 的相似度接近零（-0.1 ~ 0.1 之间）
-> - img1 vs img2 相似度 > 0.85（同场景两张图）
+> 正常結果應滿足：
+> - `fusion` 相似度 > 所有純文字 query 的相似度
+> - 同語義多語言文字的相似度 > 影象相似度 > 音影片相似度
+> - 無關 PDF 的相似度接近零（-0.1 ~ 0.1 之間）
+> - img1 vs img2 相似度 > 0.85（同場景兩張圖）
 >
-> 如果上述关系颠倒或数值全部接近零，先检查"常见失败点"第 2 条（依赖版本）。
+> 如果上述關係顛倒或數值全部接近零，先檢查"常見失敗點"第 2 條（依賴版本）。
 
 ---
 
-## 九、常见失败点
+## 九、常見失敗點
 
 ### 9.1 `FileNotFoundError: Missing local asset`
 
-脚本启动时找不到 `data/` 目录下的文件。确认你是从 `code/` 目录运行脚本，且 `data/` 文件夹已包含所有样本文件。
+指令碼啟動時找不到 `data/` 目錄下的檔案。確認你是從 `code/` 目錄執行指令碼，且 `data/` 資料夾已包含所有樣本檔案。
 
-### 9.2 `ImportError` 或 `ModuleNotFoundError`（音频/视频相关）
+### 9.2 `ImportError` 或 `ModuleNotFoundError`（音訊/影片相關）
 
-通常是因为旧版依赖或某个包未安装。常见原因：
+通常是因為舊版依賴或某個包未安裝。常見原因：
 
-- `sentence-transformers < 5.4.0`：多模态 encode 支持从 5.4 起才有，旧版调用 `encode(audio_path)` 会报错。
-- `av` 未安装：视频帧提取依赖 `PyAV`，需通过 `uv sync` 从更新后的 `pyproject.toml` 安装。
-- `librosa` / `soundfile` 未安装：音频解码依赖。
+- `sentence-transformers < 5.4.0`：多模態 encode 支援從 5.4 起才有，舊版呼叫 `encode(audio_path)` 會報錯。
+- `av` 未安裝：影片幀提取依賴 `PyAV`，需透過 `uv sync` 從更新後的 `pyproject.toml` 安裝。
+- `librosa` / `soundfile` 未安裝：音訊解碼依賴。
 
-解决方法：删除旧环境重建。
+解決方法：刪除舊環境重建。
 
 ```bash
 rm -rf .venv && uv venv && uv sync
 ```
 
-### 9.3 HuggingFace 下载超时
+### 9.3 HuggingFace 下載超時
 
-国内网络访问 `huggingface.co` 可能超时。建议提前设置镜像或手动下载模型：
+國內網路訪問 `huggingface.co` 可能超時。建議提前設定映象或手動下載模型：
 
 ```bash
 export HF_ENDPOINT="https://hf-mirror.com"
 python 08_jina_embedding_omni.py
 ```
 
-或通过 `huggingface-cli download jinaai/jina-embeddings-v5-omni-nano --local-dir models/jina-embeddings-v5-omni-nano` 预先下载到本地。
+或透過 `huggingface-cli download jinaai/jina-embeddings-v5-omni-nano --local-dir models/jina-embeddings-v5-omni-nano` 預先下載到本地。
 
-### 9.4 路径解析错误（模型或数据）
+### 9.4 路徑解析錯誤（模型或資料）
 
-脚本通过 `Path(__file__).resolve().parent` 计算路径，以脚本文件的位置为基准，不依赖 shell 的工作目录。但如果你移动了 `code/` 或 `data/` 的相对位置，需要同步修改脚本顶部的路径常量。
+指令碼透過 `Path(__file__).resolve().parent` 計算路徑，以指令碼檔案的位置為基準，不依賴 shell 的工作目錄。但如果你移動了 `code/` 或 `data/` 的相對位置，需要同步修改指令碼頂部的路徑常量。
 
-### 9.5 内存不足（OOM）
+### 9.5 記憶體不足（OOM）
 
-`v5-omni-nano` 在 MPS（Apple Silicon）上内存占用约 2-4 GB，正常可运行。如果遇到 OOM：
+`v5-omni-nano` 在 MPS（Apple Silicon）上記憶體佔用約 2-4 GB，正常可執行。如果遇到 OOM：
 
-- 确认没有其他大模型占用内存
-- 关闭浏览器等高内存占用程序
-- 如果 MPS 不可用，脚本会自动退回 CPU（速度慢但可运行）
+- 確認沒有其他大模型佔用記憶體
+- 關閉瀏覽器等高記憶體佔用程式
+- 如果 MPS 不可用，指令碼會自動退回 CPU（速度慢但可執行）
 
-> ⚠️ **PDF 嵌入的额外内存开销**：对 PDF 做嵌入时，`pypdfium2` 会将每一页渲染成高分辨率图像再送入视觉编码器。页数多或分辨率高的 PDF 会在渲染阶段短暂占用大量内存（以及相应的 MPS 显存）。如果脚本在处理 PDF 时崩溃，优先排查是否内存不足，而不是代码问题。临时解决方案：在运行前关闭其他占内存的应用，或换用页数更少的 PDF 样本。
+> ⚠️ **PDF 嵌入的額外記憶體開銷**：對 PDF 做嵌入時，`pypdfium2` 會將每一頁渲染成高解析度影象再送入視覺編碼器。頁數多或解析度高的 PDF 會在渲染階段短暫佔用大量記憶體（以及相應的 MPS 視訊記憶體）。如果指令碼在處理 PDF 時崩潰，優先排查是否記憶體不足，而不是程式碼問題。臨時解決方案：在執行前關閉其他佔記憶體的應用，或換用頁數更少的 PDF 樣本。
 
-### 9.6 输出全部接近零
+### 9.6 輸出全部接近零
 
-如果相似度矩阵里大多数值都在 ±0.01 之间，通常是模型加载时 `default_task` 或 `modality` 参数没有生效，导致向量没有走 retrieval 任务路径。确认 `transformers` 版本 >= 4.52 且 `sentence-transformers` >= 5.4.0。
-
----
-
-## 十、局限与适用边界
-
-1. **数据规模小**：本 demo 语料库只有 9 个向量，结论不代表生产环境的检索效果。
-2. **视频和音频评测不充分**：各只有一个样本，时序理解能力无法验证。
-3. **跨域迁移**：跨模态相似度受数据域影响明显，本 demo 的相似度数值（如音频 0.12、视频 0.06）不适用于其他类型的音视频内容。
-4. **nano 模型局限**：观察到的英文文档异常（见 8.2）是 nano 模型的特定行为，small 模型或其他 API 接口可能有不同表现。
-5. **模型和 API 持续演进**：文档中的参数上限与可用能力以官方最新页面为准。
+如果相似度矩陣裡大多數值都在 ±0.01 之間，通常是模型載入時 `default_task` 或 `modality` 引數沒有生效，導致向量沒有走 retrieval 任務路徑。確認 `transformers` 版本 >= 4.52 且 `sentence-transformers` >= 5.4.0。
 
 ---
 
-## 十一、Gemini Embedding 2 参考
+## 十、侷限與適用邊界
 
-作为同类产品的参照，`gemini-embedding-2`（Vertex AI）也提供原生多模态嵌入能力：
-
-- 支持文本、图像、文档、音频、视频的**交错输入**（interleaved）
-- 默认输出维度 **3072**，可通过 `output_dimensionality` 下调
-- 多模态共享上下文窗口（总 token 上限 8192）
-- 各模态有独立的输入上限（图片数量、PDF 页数、音视频时长等）
-
-与 v5-omni 的主要差异在于：Gemini Embedding 2 是托管 API，不支持本地部署；v5-omni 是开源模型，可本地运行，且能平滑兼容已有的 jina v5-text 文本索引。本专题引用此信息仅供横向理解，不做性能优劣判断。
+1. **資料規模小**：本 demo 語料庫只有 9 個向量，結論不代表生產環境的檢索效果。
+2. **影片和音訊評測不充分**：各只有一個樣本，時序理解能力無法驗證。
+3. **跨域遷移**：跨模態相似度受資料域影響明顯，本 demo 的相似度數值（如音訊 0.12、影片 0.06）不適用於其他型別的音影片內容。
+4. **nano 模型侷限**：觀察到的英文文件異常（見 8.2）是 nano 模型的特定行為，small 模型或其他 API 介面可能有不同表現。
+5. **模型和 API 持續演進**：文件中的引數上限與可用能力以官方最新頁面為準。
 
 ---
 
-## 十二、参考资料
+## 十一、Gemini Embedding 2 參考
 
-- Jina v5-omni 官方说明：<https://jina.ai/news/jina-embeddings-v5-omni-multimodal-embeddings-for-text-image-audio-and-video/>
-- GELATO 论文（arXiv 2605.08384）：<https://arxiv.org/abs/2605.08384>
-- SentenceTransformers 5.4 多模态发布说明：<https://github.com/UKPLab/sentence-transformers/releases/tag/v5.4.0>
-- Gemini Embedding 2（Vertex AI 文档）：<https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-multimodal-embeddings>
-- Gemini Embedding 2（DeepMind 模型页）：<https://deepmind.google/models/gemini/embedding/>
-- 主线教程参考：`docs/chapter3/07_multimodal_embedding.md`
+作為同類產品的參照，`gemini-embedding-2`（Vertex AI）也提供原生多模態嵌入能力：
+
+- 支援文字、影象、文件、音訊、影片的**交錯輸入**（interleaved）
+- 預設輸出維度 **3072**，可透過 `output_dimensionality` 下調
+- 多模態共享上下文視窗（總 token 上限 8192）
+- 各模態有獨立的輸入上限（圖片數量、PDF 頁數、音影片時長等）
+
+與 v5-omni 的主要差異在於：Gemini Embedding 2 是託管 API，不支援本地部署；v5-omni 是開源模型，可本地執行，且能平滑相容已有的 jina v5-text 文字索引。本專題引用此資訊僅供橫向理解，不做效能優劣判斷。
+
+---
+
+## 十二、參考資料
+
+- Jina v5-omni 官方說明：<https://jina.ai/news/jina-embeddings-v5-omni-multimodal-embeddings-for-text-image-audio-and-video/>
+- GELATO 論文（arXiv 2605.08384）：<https://arxiv.org/abs/2605.08384>
+- SentenceTransformers 5.4 多模態釋出說明：<https://github.com/UKPLab/sentence-transformers/releases/tag/v5.4.0>
+- Gemini Embedding 2（Vertex AI 文件）：<https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-multimodal-embeddings>
+- Gemini Embedding 2（DeepMind 模型頁）：<https://deepmind.google/models/gemini/embedding/>
+- 主線教程參考：`docs/chapter3/07_multimodal_embedding.md`
